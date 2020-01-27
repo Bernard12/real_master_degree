@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.15)
+cmake_minimum_required(VERSION 3.5)
 project(master_d_tests)
 
 add_subdirectory(lib/googletest-release-1.8.1)
