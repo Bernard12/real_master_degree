@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.5)
 project(master_d)
 
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 11)
 
 add_executable(master_d
         src/main.cpp
