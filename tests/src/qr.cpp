@@ -41,7 +41,7 @@ TEST(qr_naive, test_small_matrix_strong) {
 }
 
 TEST(qr_naive, test_medium_matrix_weak) {
-    Matrix m = randomMatrix(2, 2);
+    Matrix m = randomMatrix(25, 14);
     auto qr = QRDecompositionNaive(m);
     Matrix mt = multiply(qr.first, qr.second);
     double eps = precisions["weak"];
@@ -49,7 +49,7 @@ TEST(qr_naive, test_medium_matrix_weak) {
 }
 
 TEST(qr_naive, test_medium_matrix_medium) {
-    Matrix m = randomMatrix(2, 2);
+    Matrix m = randomMatrix(25, 14);
     auto qr = QRDecompositionNaive(m);
     Matrix mt = multiply(qr.first, qr.second);
     double eps = precisions["medium"];
@@ -57,7 +57,32 @@ TEST(qr_naive, test_medium_matrix_medium) {
 }
 
 TEST(qr_naive, test_medium_matrix_strong) {
-    Matrix m = randomMatrix(2, 2);
+    Matrix m = randomMatrix(25, 14);
+    auto qr = QRDecompositionNaive(m);
+    Matrix mt = multiply(qr.first, qr.second);
+    double eps = precisions["strong"];
+    ASSERT_TRUE(equals(m, mt, eps));
+}
+
+
+TEST(qr_naive, test_big_matrix_weak) {
+    Matrix m = randomMatrix(322, 228);
+    auto qr = QRDecompositionNaive(m);
+    Matrix mt = multiply(qr.first, qr.second);
+    double eps = precisions["weak"];
+    ASSERT_TRUE(equals(m, mt, eps));
+}
+
+TEST(qr_naive, test_big_matrix_medium) {
+    Matrix m = randomMatrix(322, 228);
+    auto qr = QRDecompositionNaive(m);
+    Matrix mt = multiply(qr.first, qr.second);
+    double eps = precisions["medium"];
+    ASSERT_TRUE(equals(m, mt, eps));
+}
+
+TEST(qr_naive, test_big_matrix_strong) {
+    Matrix m = randomMatrix(322, 228);
     auto qr = QRDecompositionNaive(m);
     Matrix mt = multiply(qr.first, qr.second);
     double eps = precisions["strong"];
