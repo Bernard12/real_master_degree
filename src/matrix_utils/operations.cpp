@@ -88,6 +88,17 @@ double vectorColLength(Matrix &a) {
     return sqrt(sum);
 }
 
+double matrixNorm(Matrix& a) {
+    auto a_shape = a.shape();
+    double sum = 0;
+    for (int i = 0; i < a_shape.first; i++) {
+        for (int j = 0; j < a_shape.second; j++) {
+            sum += a[i][j] * a[i][j];
+        }
+    }
+    return sqrt(sum);
+}
+
 Matrix vectorColNormalize(Matrix &a) {
     auto a_shape = a.shape();
     if (a_shape.second != 1) {

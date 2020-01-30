@@ -11,5 +11,7 @@ add_executable(simple-test src/simple_test.cpp)
 target_link_libraries(simple-test gtest gtest_main)
 
 add_executable(qr-test src/qr.cpp ../src/matrix/Matrix.h ../src/matrix_utils/operations.cpp ../src/matrix_utils/svd.cpp)
-
 target_link_libraries(qr-test gtest gtest_main)
+
+add_executable(svd-test src/svd.cpp ../src/matrix/Matrix.h ../src/matrix_utils/operations.cpp ../src/matrix_utils/svd.cpp)
+target_link_libraries(svd-test gtest gtest_main)

@@ -20,6 +20,8 @@ bool equals(Matrix &a, Matrix &b, double eps);
 
 double vectorColLength(Matrix& a);
 
+double matrixNorm(Matrix& a);
+
 Matrix randomMatrix(int n, int m);
 
 Matrix vectorColNormalize(Matrix &a);
