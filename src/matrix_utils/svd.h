@@ -13,5 +13,6 @@ struct Triple {
 double getBiggestEugenValueOfSquareMatrix(Matrix &a);
 double getBiggestSingularValueOfSquareMatrix(Matrix &a);
 pair<Matrix, Matrix> QRDecompositionNaive(Matrix& a);
-Triple SVDDecomposition(Matrix& a, double eps);
+Triple SVDDecomposition(Matrix &a, int rank, double eps);
+Triple SVDDecompositionNaive(Matrix& a);
 #endif //MASTER_D_SVD_H

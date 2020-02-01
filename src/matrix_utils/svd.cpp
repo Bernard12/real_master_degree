@@ -49,21 +49,21 @@ pair<Matrix, Matrix> QRDecompositionNaive(Matrix &a) {
     return make_pair(Q, R);
 }
 
-Triple SVDDecomposition(Matrix& a, double eps) {
+Triple SVDDecomposition(Matrix &a, int rank, double eps) {
     auto a_shape = a.shape();
     int n = a_shape.first;
     int m = a_shape.second;
-    Matrix u = randomMatrix(n, m), sgm = randomMatrix(m, m), v = randomMatrix(m, m);
+    Matrix u = randomMatrix(n, rank), sgm = randomMatrix(rank, rank), v = randomMatrix(m, rank);
     Matrix at = transpose(a);
     double err = 1e9;
     for (; err > eps;) {
         Matrix av = multiply(a, v);
         auto qr_av = QRDecompositionNaive(av);
-        u = qr_av.first;
+        u = subMatrix(qr_av.first, 0, n, 0, rank);
         Matrix atu = multiply(at, u);
         auto qr_atu = QRDecompositionNaive(atu);
-        v = qr_atu.first;
-        sgm = qr_atu.second;
+        v = subMatrix(qr_atu.first, 0, m, 0, rank);
+        sgm = subMatrix(qr_atu.second, 0, rank, 0, rank);
         // find error e = || A*V - U*SGM||
 //        av = multiply(a, v);
         Matrix usgm = multiply(u, sgm);

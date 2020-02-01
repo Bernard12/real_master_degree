@@ -9,7 +9,7 @@ Matrix sum(Matrix &a, Matrix &b) {
     auto a_shape = a.shape();
     auto b_shape = b.shape();
     if (a_shape != b_shape) {
-        throw std::invalid_argument("Bad shapes");
+        throw std::invalid_argument("Bad shapes in sum");
     }
     Matrix res(a_shape.first, a_shape.second);
     for (int i = 0; i < a_shape.first; i++) {
@@ -24,7 +24,7 @@ Matrix multiply(Matrix &a, Matrix &b) {
     auto a_shape = a.shape();
     auto b_shape = b.shape();
     if (a_shape.second != b_shape.first) {
-        throw std::invalid_argument("Bad shapes");
+        throw std::invalid_argument("Bad shapes in multiply");
     }
     Matrix res(a_shape.first, b_shape.second);
     for (int i = 0; i < a_shape.first; i++) {
@@ -123,7 +123,7 @@ Matrix subMatrix(Matrix &a, int rowStart, int rowEnd, int colStart, int colEnd) 
     int n = rowEnd - rowStart;
     int m = colEnd - colStart;
     if (n <= 0 || m <= 0) {
-        throw std::invalid_argument("Bad shapes");
+        throw std::invalid_argument("Bad shapes in submatrix");
     }
     Matrix res(rowEnd - rowStart, colEnd - colStart);
     for (int i = 0; i < n; i++) {

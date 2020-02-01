@@ -23,7 +23,7 @@ TEST(svd_naive, test_small_matrix_easy) {
     m[1][0] = 4;
     m[1][1] = 5;
     double eps = precisions["strong"];
-    auto svd = SVDDecomposition(m, eps);
+    auto svd = SVDDecomposition(m, 2, eps);
     Matrix u_sgm = multiply(svd.first, svd.second);
     auto vt = transpose(svd.third);
     Matrix res = multiply(u_sgm, vt);
@@ -33,7 +33,7 @@ TEST(svd_naive, test_small_matrix_easy) {
 TEST(svd_naive, test_small_matrix_weak) {
     Matrix m = randomMatrix(2, 2);
     double eps = precisions["weak"];
-    auto svd = SVDDecomposition(m, eps);
+    auto svd = SVDDecomposition(m, 2, eps);
     Matrix u_sgm = multiply(svd.first, svd.second);
     auto vt = transpose(svd.third);
     Matrix res = multiply(u_sgm, vt);
@@ -43,7 +43,7 @@ TEST(svd_naive, test_small_matrix_weak) {
 TEST(svd_naive, test_small_matrix_medium) {
     Matrix m = randomMatrix(2, 2);
     double eps = precisions["medium"];
-    auto svd = SVDDecomposition(m, eps);
+    auto svd = SVDDecomposition(m, 2, eps);
     Matrix u_sgm = multiply(svd.first, svd.second);
     auto vt = transpose(svd.third);
     Matrix res = multiply(u_sgm, vt);
@@ -53,7 +53,7 @@ TEST(svd_naive, test_small_matrix_medium) {
 TEST(svd_naive, test_small_matrix_strong) {
     Matrix m = randomMatrix(2, 2);
     double eps = precisions["strong"];
-    auto svd = SVDDecomposition(m, eps);
+    auto svd = SVDDecomposition(m, 2, eps);
     Matrix u_sgm = multiply(svd.first, svd.second);
     auto vt = transpose(svd.third);
     Matrix res = multiply(u_sgm, vt);
@@ -63,7 +63,7 @@ TEST(svd_naive, test_small_matrix_strong) {
 TEST(svd_naive, test_big_matrix_medium) {
     Matrix m = randomMatrix(30, 30);
     double eps = precisions["medium"];
-    auto svd = SVDDecomposition(m, eps);
+    auto svd = SVDDecomposition(m, 30, eps);
     Matrix u_sgm = multiply(svd.first, svd.second);
     auto vt = transpose(svd.third);
     Matrix res = multiply(u_sgm, vt);
@@ -73,7 +73,7 @@ TEST(svd_naive, test_big_matrix_medium) {
 TEST(svd_naive, test_big_matrix_strong) {
     Matrix m = randomMatrix(30, 30);
     double eps = precisions["strong"];
-    auto svd = SVDDecomposition(m, eps);
+    auto svd = SVDDecomposition(m, 30, eps);
     Matrix u_sgm = multiply(svd.first, svd.second);
     auto vt = transpose(svd.third);
     Matrix res = multiply(u_sgm, vt);
@@ -83,7 +83,7 @@ TEST(svd_naive, test_big_matrix_strong) {
 TEST(svd_naive, test_small_hilbert_matrix_strong) {
     Matrix m = hilbert(2, 2);
     double eps = precisions["strong"];
-    auto svd = SVDDecomposition(m, eps);
+    auto svd = SVDDecomposition(m, 2, eps);
     Matrix u_sgm = multiply(svd.first, svd.second);
     auto vt = transpose(svd.third);
     Matrix res = multiply(u_sgm, vt);
@@ -94,7 +94,17 @@ TEST(svd_naive, test_small_hilbert_matrix_strong) {
 TEST(svd_naive, test_big_hilbert_matrix_strong) {
     Matrix m = hilbert(15, 15);
     double eps = precisions["weak"];
-    auto svd = SVDDecomposition(m, eps);
+    auto svd = SVDDecomposition(m, 10, eps);
+    Matrix u_sgm = multiply(svd.first, svd.second);
+    auto vt = transpose(svd.third);
+    Matrix res = multiply(u_sgm, vt);
+    ASSERT_TRUE(equals(m, res, 1e-3));
+}
+
+TEST(svd_naive, test_extra_big_hilbert_matrix_strong) {
+    Matrix m = hilbert(400, 400);
+    double eps = precisions["strong"];
+    auto svd = SVDDecomposition(m, 5, eps);
     Matrix u_sgm = multiply(svd.first, svd.second);
     auto vt = transpose(svd.third);
     Matrix res = multiply(u_sgm, vt);
