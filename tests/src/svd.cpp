@@ -79,3 +79,24 @@ TEST(svd_naive, test_big_matrix_strong) {
     Matrix res = multiply(u_sgm, vt);
     ASSERT_TRUE(equals(m, res, 1e-3));
 }
+
+TEST(svd_naive, test_small_hilbert_matrix_strong) {
+    Matrix m = hilbert(2, 2);
+    double eps = precisions["strong"];
+    auto svd = SVDDecomposition(m, eps);
+    Matrix u_sgm = multiply(svd.first, svd.second);
+    auto vt = transpose(svd.third);
+    Matrix res = multiply(u_sgm, vt);
+    ASSERT_TRUE(equals(m, res, 1e-3));
+}
+
+
+TEST(svd_naive, test_big_hilbert_matrix_strong) {
+    Matrix m = hilbert(15, 15);
+    double eps = precisions["weak"];
+    auto svd = SVDDecomposition(m, eps);
+    Matrix u_sgm = multiply(svd.first, svd.second);
+    auto vt = transpose(svd.third);
+    Matrix res = multiply(u_sgm, vt);
+    ASSERT_TRUE(equals(m, res, 1e-3));
+}

@@ -30,4 +30,6 @@ Matrix transpose(Matrix& a);
 
 Matrix subMatrix(Matrix& a, int rowStart, int rowEnd, int colStart, int colEnd);
 
+Matrix hilbert(int n, int m);
+
 #endif //MASTER_D_OPERATIONS_H

@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.5)
 project(master_d_tests)
 set(CMAKE_CXX_STANDARD 11)
+#set(CMAKE_CXX_FLAGS "-O3 -march=native -mtune=native")
 
 add_subdirectory(lib/googletest-release-1.8.1)
 include_directories(lib/googletest-release-1.8.1/googlemock/include)

@@ -133,3 +133,13 @@ Matrix subMatrix(Matrix &a, int rowStart, int rowEnd, int colStart, int colEnd) 
     }
     return res;
 }
+
+Matrix hilbert(int n, int m) {
+    Matrix res(n, m);
+    for (int i = 0; i < n; ++i) {
+        for (int j = 0; j < m; ++j) {
+            res[i][j] = 1. / (i + j + 2);
+        }
+    }
+    return res;
+}
