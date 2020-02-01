@@ -37,7 +37,7 @@ Matrix multiply(Matrix &a, Matrix &b) {
     return res;
 }
 
-Matrix multiply(Matrix &a, double &b) {
+Matrix multiply(Matrix &a, double b) {
     auto a_shape = a.shape();
     Matrix res(a_shape.first, a_shape.second);
     for (int i = 0; i < a_shape.first; i++) {
@@ -61,6 +61,19 @@ bool equals(Matrix &a, Matrix &b, double eps) {
         }
     }
     return res;
+}
+
+double diff(Matrix& a, Matrix& b) {
+    Matrix bla = multiply(b, -1);
+    Matrix res = sum(a, bla);
+    auto shape = res.shape();
+    double diff = 0;
+    for (int i = 0; i < shape.first; ++i) {
+        for (int j = 0; j < shape.second; ++j) {
+            diff = max(abs(diff), res[i][j]);
+        }
+    }
+    return diff;
 }
 
 Matrix randomMatrix(int n, int m) {

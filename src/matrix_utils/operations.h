@@ -14,9 +14,11 @@ Matrix sum(Matrix &a, Matrix &b);
 
 Matrix multiply(Matrix &a, Matrix &b);
 
-Matrix multiply(Matrix &a, double &b);
+Matrix multiply(Matrix &a, double b);
 
 bool equals(Matrix &a, Matrix &b, double eps);
+
+double diff(Matrix& a, Matrix& b);
 
 double vectorColLength(Matrix& a);
 

@@ -27,7 +27,8 @@ TEST(svd_naive, test_small_matrix_easy) {
     Matrix u_sgm = multiply(svd.first, svd.second);
     auto vt = transpose(svd.third);
     Matrix res = multiply(u_sgm, vt);
-    ASSERT_TRUE(equals(m, res, 1e-3));
+    double d = diff(m, res);
+    ASSERT_LE(d, 1e-3);
 }
 
 TEST(svd_naive, test_small_matrix_weak) {
@@ -37,7 +38,8 @@ TEST(svd_naive, test_small_matrix_weak) {
     Matrix u_sgm = multiply(svd.first, svd.second);
     auto vt = transpose(svd.third);
     Matrix res = multiply(u_sgm, vt);
-    ASSERT_TRUE(equals(m, res, 1e-3));
+    double d = diff(m, res);
+    ASSERT_LE(d, 1e-3);
 }
 
 TEST(svd_naive, test_small_matrix_medium) {
@@ -47,7 +49,8 @@ TEST(svd_naive, test_small_matrix_medium) {
     Matrix u_sgm = multiply(svd.first, svd.second);
     auto vt = transpose(svd.third);
     Matrix res = multiply(u_sgm, vt);
-    ASSERT_TRUE(equals(m, res, 1e-3));
+    double d = diff(m, res);
+    ASSERT_LE(d, 1e-3);
 }
 
 TEST(svd_naive, test_small_matrix_strong) {
@@ -57,7 +60,8 @@ TEST(svd_naive, test_small_matrix_strong) {
     Matrix u_sgm = multiply(svd.first, svd.second);
     auto vt = transpose(svd.third);
     Matrix res = multiply(u_sgm, vt);
-    ASSERT_TRUE(equals(m, res, 1e-3));
+    double d = diff(m, res);
+    ASSERT_LE(d, 1e-3);
 }
 
 TEST(svd_naive, test_big_matrix_medium) {
@@ -67,7 +71,8 @@ TEST(svd_naive, test_big_matrix_medium) {
     Matrix u_sgm = multiply(svd.first, svd.second);
     auto vt = transpose(svd.third);
     Matrix res = multiply(u_sgm, vt);
-    ASSERT_TRUE(equals(m, res, 1e-3));
+    double d = diff(m, res);
+    ASSERT_LE(d, 1e-3);
 }
 
 TEST(svd_naive, test_big_matrix_strong) {
@@ -77,7 +82,8 @@ TEST(svd_naive, test_big_matrix_strong) {
     Matrix u_sgm = multiply(svd.first, svd.second);
     auto vt = transpose(svd.third);
     Matrix res = multiply(u_sgm, vt);
-    ASSERT_TRUE(equals(m, res, 1e-3));
+    double d = diff(m, res);
+    ASSERT_LE(d, 1e-3);
 }
 
 TEST(svd_naive, test_small_hilbert_matrix_strong) {
@@ -87,7 +93,8 @@ TEST(svd_naive, test_small_hilbert_matrix_strong) {
     Matrix u_sgm = multiply(svd.first, svd.second);
     auto vt = transpose(svd.third);
     Matrix res = multiply(u_sgm, vt);
-    ASSERT_TRUE(equals(m, res, 1e-3));
+    double d = diff(m, res);
+    ASSERT_LE(d, 1e-3);
 }
 
 
@@ -98,15 +105,17 @@ TEST(svd_naive, test_big_hilbert_matrix_strong) {
     Matrix u_sgm = multiply(svd.first, svd.second);
     auto vt = transpose(svd.third);
     Matrix res = multiply(u_sgm, vt);
-    ASSERT_TRUE(equals(m, res, 1e-3));
+    double d = diff(m, res);
+    ASSERT_LE(d, 1e-3);
 }
 
 TEST(svd_naive, test_extra_big_hilbert_matrix_strong) {
     Matrix m = hilbert(400, 400);
     double eps = precisions["strong"];
-    auto svd = SVDDecomposition(m, 5, eps);
+    auto svd = SVDDecomposition(m, 10, eps);
     Matrix u_sgm = multiply(svd.first, svd.second);
     auto vt = transpose(svd.third);
     Matrix res = multiply(u_sgm, vt);
-    ASSERT_TRUE(equals(m, res, 1e-3));
+    double d = diff(m, res);
+    ASSERT_LE(d, 1e-3);
 }
