@@ -119,3 +119,25 @@ TEST(svd_naive, test_extra_big_hilbert_matrix_strong) {
     double d = diff(m, res);
     ASSERT_LE(d, 1e-3);
 }
+
+TEST(svd_naive, test_extra_long_hilbert_matrix_strong) {
+    Matrix m = hilbert(400, 4000);
+    double eps = precisions["strong"];
+    auto svd = SVDDecomposition(m, 10, eps);
+    Matrix u_sgm = multiply(svd.first, svd.second);
+    auto vt = transpose(svd.third);
+    Matrix res = multiply(u_sgm, vt);
+    double d = diff(m, res);
+    ASSERT_LE(d, 1e-3);
+}
+
+TEST(svd_naive, test_extra_big_hilbert_matrix) {
+    Matrix m = hilbert(4000, 4000);
+    double eps = precisions["strong"];
+    auto svd = SVDDecomposition(m, 10, eps);
+    Matrix u_sgm = multiply(svd.first, svd.second);
+    auto vt = transpose(svd.third);
+    Matrix res = multiply(u_sgm, vt);
+    double d = diff(m, res);
+    ASSERT_LE(d, 1e-3);
+}
