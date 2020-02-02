@@ -139,5 +139,5 @@ TEST(svd_naive, test_extra_big_hilbert_matrix) {
     auto vt = transpose(svd.third);
     Matrix res = multiply(u_sgm, vt);
     double d = diff(m, res);
-    ASSERT_LE(d, 1e-3);
+    ASSERT_LE(d, eps);
 }
