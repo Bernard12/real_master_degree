@@ -64,7 +64,7 @@ script:
   - make
   - ./tests/qr-test --gtest_repeat=2
   - ./tests/svd-test --gtest_repeat=2
-  - ./tests/omp_tests --gtest_repeat=2
+  - ./tests/omp_test --gtest_repeat=2
 
 
 after_success:
