@@ -62,8 +62,9 @@ script:
   - cd build
   - cmake ${CMAKE_OPTIONS} -DCMAKE_CXX_FLAGS=${CXX_FLAGS} -DCMAKE_BUILD_TYPE=Coverage -DBUILD_TESTS=ON ..
   - make
-  - ./tests/qr-test --gtest_repeat=5
-  - ./tests/svd-test --gtest_repeat=5
+  - ./tests/qr-test --gtest_repeat=2
+  - ./tests/svd-test --gtest_repeat=2
+  - ./tests/omp_tests --gtest_repeat=2
 
 
 after_success:
