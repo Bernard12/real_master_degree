@@ -14,22 +14,36 @@ class Matrix {
 
 public:
     Matrix(int n, int m) : n(n), m(m) {
-        this->matrix = vector<vector<double>>(n, vector<double>(m, 0));
+        matrix = new double[n * m];
+        for (int i = 0; i < n * m; i++) {
+            matrix[i] = 0;
+        }
     }
 
-    vector<double> &operator[](const int val) {
-        return (this->matrix)[val];
+    ~Matrix() {
+        delete[] matrix;
     }
 
     pair<int, int> shape() {
         return make_pair(this->n, this->m);
     }
 
+    double get(int i, int j) {
+        int index = m * i + j;
+        return matrix[index];
+    }
+
+    void set(int i, int j, double value) {
+        int index = m * i + j;
+        matrix[index] = value;
+    }
+
     void show() {
         cout << "-----MATRIX(" << n << "," << m << ")------\n";
         for (int i = 0; i < n; i++) {
             for (int j = 0; j < m; j++) {
-                cout << (this->matrix)[i][j] << " ";
+                int index = i * m + j;
+                cout << matrix[index] << " ";
             }
             cout << '\n';
         }
@@ -38,7 +52,7 @@ public:
 
 private:
     int n, m;
-    vector<vector<double> > matrix;
+    double* matrix;
 };
 
 

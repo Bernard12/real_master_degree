@@ -10,28 +10,28 @@
 #include <random>
 #include <chrono>
 
-Matrix sum(Matrix &a, Matrix &b);
+Matrix* sum(Matrix* a, Matrix* b);
 
-Matrix multiply(Matrix &a, Matrix &b);
+Matrix* multiply(Matrix* a, Matrix* b);
 
-Matrix multiply(Matrix &a, double b);
+Matrix* multiply(Matrix* a, double b);
 
-bool equals(Matrix &a, Matrix &b, double eps);
+bool equals(Matrix* a, Matrix* b, double eps);
 
-double diff(Matrix& a, Matrix& b);
+double diff(Matrix* a, Matrix* b);
 
-double vectorColLength(Matrix& a);
+double vectorColLength(Matrix* a);
 
-double matrixNorm(Matrix& a);
+double matrixNorm(Matrix* a);
 
-Matrix randomMatrix(int n, int m);
+Matrix* randomMatrix(int n, int m);
 
-Matrix vectorColNormalize(Matrix &a);
+Matrix* vectorColNormalize(Matrix* a);
 
-Matrix transpose(Matrix& a);
+Matrix* transpose(Matrix* a);
 
-Matrix subMatrix(Matrix& a, int rowStart, int rowEnd, int colStart, int colEnd);
+Matrix* subMatrix(Matrix* a, int rowStart, int rowEnd, int colStart, int colEnd);
 
-Matrix hilbert(int n, int m);
+Matrix* hilbert(int n, int m);
 
 #endif //MASTER_D_OPERATIONS_H
