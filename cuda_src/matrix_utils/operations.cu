@@ -3,32 +3,44 @@
 //
 
 
-#include "operations.hpp"
-#include <omp.h>
+#include "operations.cuh"
 
 // TODO: make research on cache misses!
-__global__ Matrix* sum(Matrix *a, Matrix *b) {
-    auto a_shape = a->shape();
-    auto b_shape = b->shape();
-    if (a_shape != b_shape) {
-        throw std::invalid_argument("Bad shapes in sum");
-    }
-    auto res = new Matrix(a_shape.first, a_shape.second);
-
-    const int n = a_shape.first;
-    const int m = a_shape.second;
+__global__
+void sum(Matrix *a, Matrix *b) {
+    const int n = a->n;
+    const int m = a->m;
     const int nm = n * m;
-    int i, j;
-    for (int ij = 0; ij < nm; ij++) {
-        i = ij / m;
-        j = ij % m;
-        double aij = a->get(i, j);
-        double bij = b->get(i, j);
-        res->set(i, j, aij + bij);
+
+    int startIdx = blockIdx.x * blockDim.x + threadIdx.x;
+    int offset = gridDim.x * blockDim.x;
+
+    for (int ij = startIdx; ij < nm; ij += offset) {
+        double aij = a->matrix[ij];
+        double bij = b->matrix[ij];
+        a->matrix[ij] = aij + bij;
     }
-    return res;
 }
 
+__global__
+void show(Matrix* mtr, int n, int m) {
+    int startIdx = blockIdx.x * blockDim.x + threadIdx.x;
+    int offset = gridDim.x * blockDim.x;
+    printf("-----MATRIX(%d, %d)-------\n", n, m);
+    printf("StartIdx(%d), offset(%d)", startIdx, offset);
+    for (int ij = startIdx; ij < n * m; ij+= offset) {
+        int i = ij / m, j = ij % m;
+
+        if (j == 0) {
+            printf("\n");
+        }
+
+        printf("%f ", mtr->get(i, j));
+    }
+    printf("\n-----------\n");
+}
+
+/*
 Matrix* multiply(Matrix *a, Matrix *b) {
     auto a_shape = a->shape();
     auto b_shape = b->shape();
@@ -178,3 +190,4 @@ void hilbert(int n, int m, Matrix* res) {
         res->set(ij / m, ij % m, 1. / (i + j + 2));
     }
 }
+*/

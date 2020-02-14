@@ -6,29 +6,21 @@
 #include "operations.h"
 #include <omp.h>
 
-// TODO: make research on cache misses!
-Matrix* sum(Matrix *a, Matrix *b) {
-    auto a_shape = a->shape();
-    auto b_shape = b->shape();
-    if (a_shape != b_shape) {
-        throw std::invalid_argument("Bad shapes in sum");
-    }
-    auto res = new Matrix(a_shape.first, a_shape.second);
+__global__
+void* sum(Matrix* a, Matrix *b) {
+    const int nm = a->n * a->m;
 
-    const int n = a_shape.first;
-    const int m = a_shape.second;
-    const int nm = n * m;
-    int i, j;
-    for (int ij = 0; ij < nm; ij++) {
-        i = ij / m;
-        j = ij % m;
-        double aij = a->get(i, j);
-        double bij = b->get(i, j);
-        res->set(i, j, aij + bij);
+    const int startIdx = blockIdx.x * blockDim.x + threadIdx.x;
+    const int offset = gridDim.x * blockDim.x;
+
+    for (int ij = startIdx; ij < nm; ij += offset) {
+        double aij = a->matrix[ij];
+        double bij = b->matrix[ij];
+        a->set(i, j, aij + bij);
     }
-    return res;
 }
 
+/*
 Matrix* multiply(Matrix *a, Matrix *b) {
     auto a_shape = a->shape();
     auto b_shape = b->shape();
@@ -179,3 +171,4 @@ Matrix* hilbert(int n, int m) {
     }
     return res;
 }
+*/
