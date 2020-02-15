@@ -7,6 +7,7 @@
 
 #include "../matrix/Matrix.hpp"
 #include <random>
+#include <chrono>
 
 __global__
 void show(Matrix* mtr);
@@ -23,29 +24,22 @@ void multiply(Matrix* a, double b);
 __global__
 void equals(Matrix* a, Matrix* b, double eps, int* res);
 
-/*
-__global__
-double diff(Matrix* a, Matrix* b);
+void diff(Matrix* a, Matrix* b, double* diff);
+
+void randomMatrix(int n, int m, Matrix* res);
+
+void vectorColLength(Matrix* a, double* res);
+
+void matrixNorm(Matrix* a, double* res);
+
+void vectorColNormalize(Matrix* a);
 
 __global__
-double vectorColLength(Matrix* a);
+void transpose(Matrix* a, Matrix* res);
 
 __global__
-double matrixNorm(Matrix* a);
+void subMatrix(Matrix* a, int rowStart, int rowEnd, int colStart, int colEnd, Matrix** res);
 
 __global__
-Matrix* randomMatrix(int n, int m);
-
-__global__
-Matrix* vectorColNormalize(Matrix* a);
-
-__global__
-Matrix* transpose(Matrix* a);
-
-__global__
-Matrix* subMatrix(Matrix* a, int rowStart, int rowEnd, int colStart, int colEnd);
-
-__global__
-Matrix* hilbert(int n, int m);
-*/
+void hilbert(int n, int m, Matrix** res);
 #endif //MASTER_D_OPERATIONS_H

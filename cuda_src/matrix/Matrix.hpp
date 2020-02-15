@@ -25,13 +25,13 @@ public:
     }
 
 
-    __device__
+    __device__ __host__
     double get(int i, int j) {
         int index = m * i + j;
         return matrix[index];
     }
 
-    __device__
+    __device__ __host__
     void set(int i, int j, double value) {
         int index = m * i + j;
         matrix[index] = value;
