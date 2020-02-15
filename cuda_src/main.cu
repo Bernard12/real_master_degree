@@ -23,20 +23,23 @@ void copyMatrixFromHostToDevice(Matrix* hostMatrix, Matrix** deviceMatrix) {
     CCE(cudaMalloc(deviceMatrix, sizeof(Matrix) * 1));
     CCE(cudaMemcpy(*deviceMatrix, temp, sizeof(Matrix) * 1, cudaMemcpyHostToDevice));
 
-    temp-> matrix = NULL;
+    temp->matrix = NULL;
     delete temp;
-
 }
 
 int main() {
     Matrix* mtr = new Matrix(5, 5);
-    mtr->matrix[0] = 1;
     Matrix* dev_m;
     Matrix* dev_m2;
+    Matrix* dev_m3;
+    copyMatrixFromHostToDevice(mtr, &dev_m3);
+    mtr->matrix[0] = 2;
     copyMatrixFromHostToDevice(mtr, &dev_m);
     copyMatrixFromHostToDevice(mtr, &dev_m2);
-    sum<<<16, 32>>>(dev_m, dev_m2);
-    show<<<1, 1>>>(dev_m, 5, 5);
+    // sum<<<16, 32>>>(dev_m, dev_m2);
+    multiply<<<16, 32>>>(dev_m, dev_m2, dev_m3);
+    multiply<<<16, 32>>>(dev_m3, .5);
+    show<<<1, 1>>>(dev_m3);
     CCE(cudaGetLastError());
     CCE(cudaDeviceSynchronize())
     CCE(cudaGetLastError());

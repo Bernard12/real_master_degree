@@ -5,7 +5,6 @@
 
 #include "operations.cuh"
 
-// TODO: make research on cache misses!
 __global__
 void sum(Matrix *a, Matrix *b) {
     const int n = a->n;
@@ -23,76 +22,67 @@ void sum(Matrix *a, Matrix *b) {
 }
 
 __global__
-void show(Matrix* mtr, int n, int m) {
+void show(Matrix* mtr) {
     int startIdx = blockIdx.x * blockDim.x + threadIdx.x;
     int offset = gridDim.x * blockDim.x;
+    int n = mtr->n;
+    int m = mtr->m;
     printf("-----MATRIX(%d, %d)-------\n", n, m);
     printf("StartIdx(%d), offset(%d)", startIdx, offset);
     for (int ij = startIdx; ij < n * m; ij+= offset) {
-        int i = ij / m, j = ij % m;
-
-        if (j == 0) {
+        if (ij % m == 0) {
             printf("\n");
         }
-
-        printf("%f ", mtr->get(i, j));
+        printf("%f ", mtr->matrix[ij]);
     }
     printf("\n-----------\n");
 }
 
-/*
-Matrix* multiply(Matrix *a, Matrix *b) {
-    auto a_shape = a->shape();
-    auto b_shape = b->shape();
-    if (a_shape.second != b_shape.first) {
-        throw std::invalid_argument("Bad shapes in multiply");
-    }
-    auto* res = new Matrix(a_shape.first, b_shape.second);
-    // TODO
-    // Added better implementation
-    for (int i = 0; i < a_shape.first; i++) {
-        for (int j = 0; j < b_shape.second; j++) {
-            for (int k = 0; k < a_shape.second; k++) {
-                double aik = a->get(i, k);
-                double bkj = b->get(k, j);
-                double prev_resij = res->get(i, j);
-                res->set(i, j, prev_resij + aik * bkj);
-            }
+__global__
+void multiply(Matrix *a, Matrix *b, Matrix* res) {
+    int startIdx = blockIdx.x * blockDim.x + threadIdx.x;
+    int offset = gridDim.x * blockDim.x;
+
+    int n = a->n;
+    int m = a->m;
+    int k = b->m;
+
+    double sum = 0;
+
+    for (int i = startIdx; i < n * k; i += offset) {
+        int row = i / k;
+        int col = i % k;
+        for(int q = 0; q < m; q++) {
+            sum += a->matrix[row * m + q] * b->matrix[q * m + col];
         }
+        res->matrix[row * k + col] = sum;
     }
-    return res;
 }
 
-Matrix* multiply(Matrix *a, double b) {
-    auto a_shape = a->shape();
-    auto* res = new Matrix(a_shape.first, a_shape.second);
+__global__
+void multiply(Matrix *a, double b) {
+    int startIdx = blockIdx.x * blockDim.x + threadIdx.x;
+    int offset = gridDim.x * blockDim.x;
+    int n = a->n;
+    int m = a->m;
+    for (int ij = startIdx; ij < n * m; ij+= offset) {
+        a->matrix[ij] *= b;
+    }
+}
 
-    const int n = a_shape.first, m = a_shape.second;
+__global__
+void equals(Matrix *a, Matrix *b, double eps, int* res) {
+    const int n = a->n, m = a->m;
+    int temp = 1;
     for (int ij = 0; ij < n * m; ij++) {
-        int i = ij / m;
-        int j = ij % m;
-        double aij = a->get(i, j);
-        res->set(i, j, aij * b);
+        double aij = a->matrix[ij];
+        double bij = b->matrix[ij];
+        temp = temp & (abs(aij - bij) <= eps);
     }
-    return res;
+    atomicAnd(res, temp);
 }
 
-bool equals(Matrix *a, Matrix *b, double eps) {
-    auto a_shape = a->shape();
-    auto b_shape = b->shape();
-    if (a_shape != b_shape) {
-        return false;
-    }
-    bool res = true;
-    const int n = a_shape.first, m = a_shape.second;
-    for (int ij = 0; ij < n * m; ij++) {
-        double aij = a->get(ij / m,ij % m);
-        double bij = b->get(ij / m,ij % m);
-        res = res && (abs(aij - bij) <= eps);
-    }
-    return res;
-}
-
+/*
 double diff(Matrix *a, Matrix *b) {
     Matrix* bla = multiply(b, -1);
     Matrix* res = sum(a, bla);
