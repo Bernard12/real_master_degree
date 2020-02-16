@@ -75,6 +75,29 @@ Matrix* multiply(Matrix *a, double b) {
     return res;
 }
 
+__global__
+void multiply(Matrix* a, Matrix* b, Matrix* c) {
+    int startIdx = blockIdx.x * blockDim.x + threadIdx.x;
+    int offset = gridDim.x * blockDim.x;
+
+    int n = a->n;
+    int m = a->m;
+    int k = b->m;
+
+
+    for (int i = startIdx; i < n * k; i += offset) {
+        double sum = 0;
+        int row = i / k;
+        int col = i % k;
+        for(int q = 0; q < m; q++) {
+            // sum += a->matrix[row * m + q] * b->matrix[q * m + col];
+            sum += a->get(row, q) * b->get(q, col);
+        }
+        // c->matrix[row * k + col] = sum;
+        c->set(row, col, sum);
+    }
+}
+
 __host__ __device__
 bool equals(Matrix *a, Matrix *b, double eps) {
     bool res = true;

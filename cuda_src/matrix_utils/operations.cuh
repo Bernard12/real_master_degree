@@ -21,6 +21,9 @@ Matrix* multiply(Matrix* a, Matrix* b);
 __host__ __device__
 Matrix* multiply(Matrix* a, double b);
 
+__global__
+void multiply(Matrix* a, Matrix* b, Matrix* c);
+
 __host__ __device__
 bool equals(Matrix* a, Matrix* b, double eps);
 

@@ -1,17 +1,63 @@
 #include "./svd.cuh"
 
+
+#define CCE(errValue)                                                   \
+    do {                                                                \
+        if (errValue != cudaSuccess) {                                  \
+            fprintf(stderr ,"[CUDA-ERROR]-[%s(line:%d)]: %s\n", __FILE__, __LINE__, cudaGetErrorString(errValue)); \
+            exit(0);                                                    \
+        }                                                               \
+    } while(0);
+
+// CATCH_CUDA_ERR(cudaMalloc(&dev_array, sizeof(int) * used_n));
+// CATCH_CUDA_ERR(cudaMemcpy(dev_array, array, sizeof(int) * used_n, cudaMemcpyHostToDevice));
+
+void copyMatrixFromHostToDevice(Matrix* hostMatrix, Matrix** deviceMatrix, double** deviceMatrixArray) {
+    const int n = hostMatrix->n, m = hostMatrix->m;
+    Matrix* temp = new Matrix(n, m);
+
+    const int matrix_size = sizeof(double) * n * m;
+    CCE(cudaMalloc(&temp->matrix, matrix_size));
+    CCE(cudaMemcpy(temp->matrix, hostMatrix->matrix, matrix_size, cudaMemcpyHostToDevice));
+
+    CCE(cudaMalloc(deviceMatrix, sizeof(Matrix) * 1));
+    CCE(cudaMemcpy(*deviceMatrix, temp, sizeof(Matrix) * 1, cudaMemcpyHostToDevice));
+
+    *deviceMatrixArray = temp->matrix;
+    temp->matrix = NULL;
+    delete temp;
+}
+
+void copyMatrixFromDeviceToHost(double* deviceMatrixArray, Matrix** hostMatrix, int n, int m) {
+    *hostMatrix = new Matrix(n, m);
+    CCE(
+        cudaMemcpy(
+            (*hostMatrix)->matrix,
+            deviceMatrixArray,
+            sizeof(double) * n * m,
+            cudaMemcpyDeviceToHost
+        )
+    );
+}
+
+/*
+    QRDecompostion is part of SVD and should be called from host
+    Matrix* a - pointer to matrix on host
+    @return pair of Q and R matrix on host
+*/
 pair<Matrix*, Matrix*> QRDecompositionNaive(Matrix *a) {
     int n = a->n;
     int m = a->m;
-    auto Q = new Matrix(n, m), R = new Matrix(m, m);
+    Matrix* Q = new Matrix(n, m);
+    Matrix* R = new Matrix(m, m);
     for (int i = 0; i < m; i++) {
         auto ai = subMatrix(a, 0, n + 0, i + 0, i + 1);
         for (int k = 0; k < i; k++) {
-            auto qk = subMatrix(Q, 0, n + 0, k + 0, k + 1);
-            auto qkt = transpose(qk);
+            Matrix* qk = subMatrix(Q, 0, n + 0, k + 0, k + 1);
+            Matrix* qkt = transpose(qk);
             Matrix* tempMultiply = multiply(qkt, ai);
             double v = -1 * tempMultiply->get(0, 0);
-            auto tmp = multiply(qk, v);
+            Matrix* tmp = multiply(qk, v);
             Matrix* temp_ai = sum(ai, tmp);
             delete ai;
             ai = temp_ai;
@@ -30,10 +76,6 @@ pair<Matrix*, Matrix*> QRDecompositionNaive(Matrix *a) {
         delete ai;
         delete nai;
     }
-#ifdef DEBUG
-    Q.show();
-    R.show();
-#endif
     return make_pair(Q, R);
 }
 
@@ -44,7 +86,44 @@ Triple* SVDDecomposition(Matrix *a, int rank, double eps) {
     auto at = transpose(a);
     double err = 1e9;
     for (; err > eps;) {
-        auto av = multiply(a, v);
+        // Logic
+        // 1. copy matrixes to device
+        // 2. call multiply kernel
+        // 3. copy results to host
+        // 4. free allocated device memory
+
+        // part 1 start
+        Matrix *a_dev, *v_dev, *av_dev;
+        double *a_arr, *v_arr, *av_arr;
+        copyMatrixFromHostToDevice(a, &a_dev, &a_arr);
+        copyMatrixFromHostToDevice(v, &v_dev, &v_arr);
+        copyMatrixFromHostToDevice(u, &av_dev, &av_arr);
+        // part 1 end
+
+        // part 2 start
+        multiply<<<16, 16>>>(a_dev, v_dev, av_dev);
+        CCE(cudaGetLastError())
+        // part 2 end 
+
+        // part 3 start
+        Matrix* av;
+        copyMatrixFromDeviceToHost(av_arr, &av, a->n, rank);
+        // part 3 end 
+
+
+        // part 4 start
+        CCE(cudaFree(a_arr));
+        CCE(cudaFree(a_dev));
+        CCE(cudaFree(v_arr));
+        CCE(cudaFree(v_dev));
+        CCE(cudaFree(av_arr));
+        CCE(cudaFree(av_dev));
+        // part 4 end
+
+        // auto av = multiply(a, v);
+        // show(av, a->n, rank);
+        // show(av_test, a->n, rank);
+        // exit(0);
         auto qr_av = QRDecompositionNaive(av);
 
         Matrix* u_tmp = subMatrix(qr_av.first, 0, n, 0, rank);
@@ -63,14 +142,17 @@ Triple* SVDDecomposition(Matrix *a, int rank, double eps) {
         sgm = sgm_tmp;
 
         // find error e = || A*V - U*SGM||
-//        av = multiply(a, v);
+        // av = multiply(a, v);
         auto usgm = multiply(u, sgm);
         double revert = -1;
         Matrix* usgmt = multiply(usgm, revert);
-        auto diff = sum(av, usgmt);
-        err = matrixNorm(diff);
+        auto difff = sum(av, usgmt);
+        err = matrixNorm(difff);
+        // double av_diff = diff(av, av_test);
+        printf("Iteration ended, error=%f, diff=%f\n", err, 0.f);
 
         delete av;
+        // delete av_test;
         delete qr_av.first;
         delete qr_av.second;
         delete atu;
@@ -78,7 +160,7 @@ Triple* SVDDecomposition(Matrix *a, int rank, double eps) {
         delete qr_atu.second;
         delete usgm;
         delete usgmt;
-        delete diff;
+        delete difff;
     }
     delete at;
     return new Triple(u, sgm, v);
