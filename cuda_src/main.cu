@@ -1,4 +1,4 @@
-#include "matrix/Matrix.hpp"
+#include "matrix/Matrix.cuh"
 #include "matrix_utils/operations.cuh"
 
 #define CCE(errValue)                                        \
@@ -29,17 +29,18 @@ void copyMatrixFromHostToDevice(Matrix* hostMatrix, Matrix** deviceMatrix) {
 }
 
 int main() {
-    Matrix* mtr = new Matrix(5, 5);
-    mtr->matrix[0] = 1;
-    Matrix* dev_m;
-    Matrix* dev_m2;
-    copyMatrixFromHostToDevice(mtr, &dev_m);
-    copyMatrixFromHostToDevice(mtr, &dev_m2);
-    sum<<<16, 32>>>(dev_m, dev_m2);
-    show<<<1, 1>>>(dev_m, 5, 5);
-    CCE(cudaGetLastError());
-    CCE(cudaDeviceSynchronize())
-    CCE(cudaGetLastError());
+    Matrix* mtr = hilbert(5, 5);
+    // mtr->matrix[0] = 1;
+    // Matrix* dev_m;
+    // Matrix* dev_m2;
+    // copyMatrixFromHostToDevice(mtr, &dev_m);
+    // copyMatrixFromHostToDevice(mtr, &dev_m2);
+    // sum<<<16, 32>>>(dev_m, dev_m2);
+    // show<<<1, 1>>>(dev_m, 5, 5);
+    // CCE(cudaGetLastError());
+    // CCE(cudaDeviceSynchronize())
+    // CCE(cudaGetLastError());
+    show(mtr, 5, 5);
     delete mtr;
     return 0;
 }
