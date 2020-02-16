@@ -1,5 +1,6 @@
 #include "matrix/Matrix.cuh"
-#include "matrix_utils/operations.cuh"
+#include "matrix_utils/svd.cuh"
+#include <stdio.h>
 
 #define CCE(errValue)                                        \
     do {                                                                \
@@ -29,18 +30,17 @@ void copyMatrixFromHostToDevice(Matrix* hostMatrix, Matrix** deviceMatrix) {
 }
 
 int main() {
-    Matrix* mtr = hilbert(5, 5);
-    // mtr->matrix[0] = 1;
-    // Matrix* dev_m;
-    // Matrix* dev_m2;
-    // copyMatrixFromHostToDevice(mtr, &dev_m);
-    // copyMatrixFromHostToDevice(mtr, &dev_m2);
-    // sum<<<16, 32>>>(dev_m, dev_m2);
-    // show<<<1, 1>>>(dev_m, 5, 5);
-    // CCE(cudaGetLastError());
-    // CCE(cudaDeviceSynchronize())
-    // CCE(cudaGetLastError());
-    show(mtr, 5, 5);
+    Matrix* mtr = hilbert(1000, 1000);
+    // auto p = QRDecompositionNaive(mtr);
+    // Matrix* res = multiply(p.first, p.second);
+    // show(mtr, 5, 5);
+    // show(res, 5, 5);
+    auto trip = SVDDecomposition(mtr, 10, 1e-6);
+    auto tmp = multiply(trip->first, trip->second);
+    auto t = transpose(trip->third);
+    auto res = multiply(tmp, t);
+    // printf("Diff: %f \n", diff(mtr, res));
+    printf("Diff: %f \n", diff(mtr, res));
     delete mtr;
     return 0;
 }

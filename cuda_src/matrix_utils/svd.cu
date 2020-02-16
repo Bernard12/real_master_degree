@@ -1,25 +1,8 @@
-#include "./svd.h"
-
-
-double getBiggestEugenValueOfSquareMatrix(Matrix *a) {
-    auto a_shape = a->shape();
-    if (a_shape.first != a_shape.second) {
-        return 0;
-    }
-    auto u = randomMatrix(a_shape.first, 1);
-    for (int i = 0; i < 10; i++) {
-        auto w = multiply(a, u);
-        u = vectorColNormalize(w);
-    }
-    auto ut = transpose(u);
-    auto tmp = multiply(a, u);
-    return multiply(ut, tmp)->get(0, 0);
-}
+#include "./svd.cuh"
 
 pair<Matrix*, Matrix*> QRDecompositionNaive(Matrix *a) {
-    auto a_shape = a->shape();
-    int n = a_shape.first;
-    int m = a_shape.second;
+    int n = a->n;
+    int m = a->m;
     auto Q = new Matrix(n, m), R = new Matrix(m, m);
     for (int i = 0; i < m; i++) {
         auto ai = subMatrix(a, 0, n + 0, i + 0, i + 1);
@@ -44,7 +27,6 @@ pair<Matrix*, Matrix*> QRDecompositionNaive(Matrix *a) {
             double nk0 = nai->get(k, 0);
             Q->set(k, i, nk0);
         }
-//        Matrix* qk = subMatrix(Q, 0, n + 0, i + 0, i + 1);
         delete ai;
         delete nai;
     }
@@ -56,9 +38,8 @@ pair<Matrix*, Matrix*> QRDecompositionNaive(Matrix *a) {
 }
 
 Triple* SVDDecomposition(Matrix *a, int rank, double eps) {
-    auto a_shape = a->shape();
-    int n = a_shape.first;
-    int m = a_shape.second;
+    int n = a->n;
+    int m = a->m;
     auto u = randomMatrix(n, rank), sgm = randomMatrix(rank, rank), v = randomMatrix(m, rank);
     auto at = transpose(a);
     double err = 1e9;
