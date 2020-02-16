@@ -10,4 +10,5 @@ add_executable(cd
   main.cu
   matrix/Matrix.hpp
   matrix_utils/operations.cu
+  matrix_utils/svd.cu
   )

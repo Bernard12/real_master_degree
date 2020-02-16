@@ -25,6 +25,7 @@ public:
     }
 
 
+    /*
     __device__ __host__
     double get(int i, int j) {
         int index = m * i + j;
@@ -36,6 +37,7 @@ public:
         int index = m * i + j;
         matrix[index] = value;
     }
+    */
 
     int n, m;
     double* matrix;

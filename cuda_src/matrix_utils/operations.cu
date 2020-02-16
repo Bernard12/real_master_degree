@@ -6,6 +6,16 @@
 #include "operations.cuh"
 
 __global__
+void get(Matrix* mtr, int index, double* res) {
+    *res = mtr->matrix[index];
+}
+
+__global__
+void set(Matrix* mtr, int index, double* res) {
+    mtr->matrix[index] = *res;
+}
+
+__global__
 void sum(Matrix *a, Matrix *b) {
     const int n = a->n;
     const int m = a->m;
@@ -60,13 +70,13 @@ void multiply(Matrix *a, Matrix *b, Matrix* res) {
 }
 
 __global__
-void multiply(Matrix *a, double b) {
+void multiply(Matrix *a, double* b) {
     int startIdx = blockIdx.x * blockDim.x + threadIdx.x;
     int offset = gridDim.x * blockDim.x;
     int n = a->n;
     int m = a->m;
     for (int ij = startIdx; ij < n * m; ij+= offset) {
-        a->matrix[ij] *= b;
+        a->matrix[ij] *= (*b);
     }
 }
 
@@ -118,7 +128,7 @@ void matrixNorm(Matrix *a, double* res) {
     const int n = a->n, m = a->m;
     double sum = 0;
     for (int ij = 0; ij < n * m; ij++) {
-        double aij = a->get(ij / m, ij % m);
+        double aij = a->matrix[ij];
         sum += aij * aij;
     }
     *res = sqrt(sum);
@@ -128,41 +138,32 @@ void vectorColNormalize(Matrix *a) {
     double len = 0;
     // TODO: need sync to work
     vectorColLength(a, &len);
-    double sum = 1.0 / 1;
-    return multiply<<<16, 16>>>(a, sum);
+    double sum = 1.0 / len;
+    multiply<<<16, 16>>>(a, &sum);
 }
 
-__global__
-void transpose(Matrix* a, Matrix* res);
-    const int n = a->n, m = a->m;
+__host__ __device__
+void transpose(Matrix* a, Matrix* res) {
+    int n = a->n, m = a->m;
     for (int ij = 0; ij < n * m; ij++) {
         double aij = a->matrix[ij];
         int i = ij / m;
         int j = ij % m;
-        res->matrix[] = aij;
-        // res->set(ij % m, ij / m, aij);
+        res->matrix[j * n + i] = aij;
     }
-    return res;
+}
+
+__host__ __device__
+void subMatrix(Matrix* a, int rowStart, int rowEnd, int colStart, int colEnd, Matrix* res) {
+    int ij = 0;
+    for (int i = rowStart; i < rowEnd; i++) {
+        for (int j = colStart; j < colEnd; j++) {
+            res->matrix[ij++] = a->matrix[i * a->m + j];
+        }
+    }
 }
 
 /*
-Matrix* subMatrix(Matrix *a, int rowStart, int rowEnd, int colStart, int colEnd) {
-    int n = rowEnd - rowStart;
-    int m = colEnd - colStart;
-    if (n <= 0 || m <= 0) {
-        throw std::invalid_argument("Bad shapes in submatrix");
-    }
-    auto* res = new Matrix(rowEnd - rowStart, colEnd - colStart);
-    // TODO:
-    // Add CUDA parallel option of loop
-    for (int ij = 0; ij < n * m; ij++) {
-        int i = ij / m;
-        int j = ij % m;
-        double aij = a->get(rowStart + i, colStart + j);
-        res->set(i, j, aij);
-    }
-    return res;
-}
 
 void hilbert(int n, int m, Matrix* res) {
     // auto* res = new Matrix(n, m);
@@ -175,4 +176,5 @@ void hilbert(int n, int m, Matrix* res) {
         res->set(ij / m, ij % m, 1. / (i + j + 2));
     }
 }
+
 */

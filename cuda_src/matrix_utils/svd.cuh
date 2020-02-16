@@ -4,8 +4,7 @@
 
 #ifndef MASTER_D_SVD_H
 #define MASTER_D_SVD_H
-#include "../matrix/Matrix.hpp"
-#include "operations.hpp"
+#include "operations.cuh"
 
 struct Triple {
     Triple(Matrix* a, Matrix* b, Matrix* c): first(a), second(b), third(c) {}
