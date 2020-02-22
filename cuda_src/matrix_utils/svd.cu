@@ -79,6 +79,44 @@ pair<Matrix*, Matrix*> QRDecompositionNaive(Matrix *a) {
     return make_pair(Q, R);
 }
 
+Matrix* multiply_wrapper(Matrix* a, Matrix* b) {
+    // Logic
+    // 1. copy matrixes to device
+    // 2. call multiply kernel
+    // 3. copy results to host
+    // 4. free allocated device memory
+
+    Matrix* ab = new Matrix(a->n, b->m);
+
+    // part 1 start
+    Matrix *a_dev, *b_dev, *ab_dev;
+    double *a_arr, *b_arr, *ab_arr;
+    copyMatrixFromHostToDevice(a, &a_dev, &a_arr);
+    copyMatrixFromHostToDevice(b, &b_dev, &b_arr);
+    copyMatrixFromHostToDevice(ab, &ab_dev, &ab_arr);
+    // part 1 end
+
+    // part 2 start
+    multiply<<<128, 32>>>(a_dev, b_dev, ab_dev);
+    CCE(cudaGetLastError())
+    // part 2 end 
+
+    // part 3 start
+    copyMatrixFromDeviceToHost(ab_arr, &ab, a->n, b->m);
+    // part 3 end 
+
+
+    // part 4 start
+    CCE(cudaFree(a_arr));
+    CCE(cudaFree(a_dev));
+    CCE(cudaFree(b_arr));
+    CCE(cudaFree(b_dev));
+    CCE(cudaFree(ab_arr));
+    CCE(cudaFree(ab_dev));
+    // part 4 end
+    return ab;
+}
+
 Triple* SVDDecomposition(Matrix *a, int rank, double eps) {
     int n = a->n;
     int m = a->m;
@@ -86,41 +124,10 @@ Triple* SVDDecomposition(Matrix *a, int rank, double eps) {
     auto at = transpose(a);
     double err = 1e9;
     for (; err > eps;) {
-        // Logic
-        // 1. copy matrixes to device
-        // 2. call multiply kernel
-        // 3. copy results to host
-        // 4. free allocated device memory
-
-        // part 1 start
-        Matrix *a_dev, *v_dev, *av_dev;
-        double *a_arr, *v_arr, *av_arr;
-        copyMatrixFromHostToDevice(a, &a_dev, &a_arr);
-        copyMatrixFromHostToDevice(v, &v_dev, &v_arr);
-        copyMatrixFromHostToDevice(u, &av_dev, &av_arr);
-        // part 1 end
-
-        // part 2 start
-        multiply<<<16, 16>>>(a_dev, v_dev, av_dev);
-        CCE(cudaGetLastError())
-        // part 2 end 
-
-        // part 3 start
-        Matrix* av;
-        copyMatrixFromDeviceToHost(av_arr, &av, a->n, rank);
-        // part 3 end 
-
-
-        // part 4 start
-        CCE(cudaFree(a_arr));
-        CCE(cudaFree(a_dev));
-        CCE(cudaFree(v_arr));
-        CCE(cudaFree(v_dev));
-        CCE(cudaFree(av_arr));
-        CCE(cudaFree(av_dev));
-        // part 4 end
 
         // auto av = multiply(a, v);
+        auto av = multiply_wrapper(a, v);
+
         // show(av, a->n, rank);
         // show(av_test, a->n, rank);
         // exit(0);
