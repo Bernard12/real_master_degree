@@ -13,6 +13,7 @@ using namespace std;
 class Matrix {
 
 public:
+    __host__ __device__
     Matrix(int n, int m) : n(n), m(m) {
         matrix = new double[n * m];
         for (int i = 0; i < n * m; i++) {
@@ -20,18 +21,19 @@ public:
         }
     }
 
+    __host__ __device__
     ~Matrix() {
         delete[] matrix;
     }
 
 
-    __device__
+    __host__ __device__
     double get(int i, int j) {
         int index = m * i + j;
         return matrix[index];
     }
 
-    __device__
+    __host__ __device__
     void set(int i, int j, double value) {
         int index = m * i + j;
         matrix[index] = value;
