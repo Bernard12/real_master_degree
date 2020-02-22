@@ -137,7 +137,7 @@ Triple* SVDDecomposition(Matrix *a, int rank, double eps) {
         delete u;
         u = u_tmp;
 
-        auto atu = multiply(at, u);
+        auto atu = multiply_wrapper(at, u);
         auto qr_atu = QRDecompositionNaive(atu);
 
         Matrix* v_tmp = subMatrix(qr_atu.first, 0, m, 0, rank);
@@ -150,7 +150,7 @@ Triple* SVDDecomposition(Matrix *a, int rank, double eps) {
 
         // find error e = || A*V - U*SGM||
         // av = multiply(a, v);
-        auto usgm = multiply(u, sgm);
+        auto usgm = multiply_wrapper(u, sgm);
         double revert = -1;
         Matrix* usgmt = multiply(usgm, revert);
         auto difff = sum(av, usgmt);
