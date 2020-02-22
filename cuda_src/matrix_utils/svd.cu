@@ -51,7 +51,7 @@ pair<Matrix*, Matrix*> QRDecompositionNaive(Matrix *a) {
     Matrix* Q = new Matrix(n, m);
     Matrix* R = new Matrix(m, m);
     for (int i = 0; i < m; i++) {
-        auto ai = subMatrix(a, 0, n + 0, i + 0, i + 1);
+        Matrix* ai = subMatrix(a, 0, n + 0, i + 0, i + 1);
         for (int k = 0; k < i; k++) {
             Matrix* qk = subMatrix(Q, 0, n + 0, k + 0, k + 1);
             Matrix* qkt = transpose(qk);
@@ -94,6 +94,7 @@ Matrix* multiply_wrapper(Matrix* a, Matrix* b) {
     copyMatrixFromHostToDevice(a, &a_dev, &a_arr);
     copyMatrixFromHostToDevice(b, &b_dev, &b_arr);
     copyMatrixFromHostToDevice(ab, &ab_dev, &ab_arr);
+    delete ab;
     // part 1 end
 
     // part 2 start
@@ -125,8 +126,8 @@ Triple* SVDDecomposition(Matrix *a, int rank, double eps) {
     double err = 1e9;
     for (; err > eps;) {
 
-        // auto av = multiply(a, v);
-        auto av = multiply_wrapper(a, v);
+        // auto av = multiply_wrapper(a, v);
+        auto av = multiply(a, v);
 
         // show(av, a->n, rank);
         // show(av_test, a->n, rank);
@@ -137,7 +138,8 @@ Triple* SVDDecomposition(Matrix *a, int rank, double eps) {
         delete u;
         u = u_tmp;
 
-        auto atu = multiply_wrapper(at, u);
+        // auto atu = multiply_wrapper(at, u);
+        auto atu = multiply(at, u);
         auto qr_atu = QRDecompositionNaive(atu);
 
         Matrix* v_tmp = subMatrix(qr_atu.first, 0, m, 0, rank);
@@ -150,7 +152,8 @@ Triple* SVDDecomposition(Matrix *a, int rank, double eps) {
 
         // find error e = || A*V - U*SGM||
         // av = multiply(a, v);
-        auto usgm = multiply_wrapper(u, sgm);
+        // auto usgm = multiply_wrapper(u, sgm);
+        auto usgm = multiply(u, sgm);
         double revert = -1;
         Matrix* usgmt = multiply(usgm, revert);
         auto difff = sum(av, usgmt);

@@ -112,14 +112,16 @@ bool equals(Matrix *a, Matrix *b, double eps) {
 
 __host__ __device__
 double diff(Matrix *a, Matrix *b) {
-    Matrix* bla = multiply(b, -1);
-    Matrix* res = sum(a, bla);
+    Matrix* tmp = multiply(b, -1);
+    Matrix* res = sum(a, tmp);
     double diff = 0;
     const int n = a->n, m = a->m;
     for (int ij = 0; ij < n * m; ij++) {
         double rij = res->get(ij / m, ij % m);
         diff = max(abs(diff), rij);
     }
+    delete tmp;
+    delete res;
     return diff;
 }
 

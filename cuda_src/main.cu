@@ -6,7 +6,7 @@
 // CATCH_CUDA_ERR(cudaMemcpy(dev_array, array, sizeof(int) * used_n, cudaMemcpyHostToDevice));
 
 int main() {
-    int n = 9000, m = 9000;
+    int n = 10000, m = 10000;
     Matrix* mtr = hilbert(n, m);
     // auto p = QRDecompositionNaive(mtr);
     // Matrix* res = multiply(p.first, p.second);
@@ -19,5 +19,12 @@ int main() {
     // show(mtr, n, m);
     // show(res, n, m);
     delete mtr;
+    delete tmp;
+    delete t;
+    delete res;
+    delete trip->first;
+    delete trip->second;
+    delete trip->third;
+    delete trip;
     return 0;
 }
