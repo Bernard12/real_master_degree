@@ -15,6 +15,7 @@
 void copyMatrixFromHostToDevice(Matrix* hostMatrix, Matrix** deviceMatrix, double** deviceMatrixArray) {
     const int n = hostMatrix->n, m = hostMatrix->m;
     Matrix* temp = new Matrix(n, m);
+    delete[] temp->matrix;
 
     const int matrix_size = sizeof(double) * n * m;
     CCE(cudaMalloc(&temp->matrix, matrix_size));
@@ -126,21 +127,21 @@ Triple* SVDDecomposition(Matrix *a, int rank, double eps) {
     double err = 1e9;
     for (; err > eps;) {
 
-        // auto av = multiply_wrapper(a, v);
-        auto av = multiply(a, v);
+        Matrix* av = multiply_wrapper(a, v);
+        // auto av = multiply(a, v);
 
         // show(av, a->n, rank);
         // show(av_test, a->n, rank);
         // exit(0);
-        auto qr_av = QRDecompositionNaive(av);
+        pair<Matrix*, Matrix*> qr_av = QRDecompositionNaive(av);
 
         Matrix* u_tmp = subMatrix(qr_av.first, 0, n, 0, rank);
         delete u;
         u = u_tmp;
 
-        // auto atu = multiply_wrapper(at, u);
-        auto atu = multiply(at, u);
-        auto qr_atu = QRDecompositionNaive(atu);
+        Matrix* atu = multiply_wrapper(at, u);
+        // auto atu = multiply(at, u);
+        pair<Matrix*, Matrix*> qr_atu = QRDecompositionNaive(atu);
 
         Matrix* v_tmp = subMatrix(qr_atu.first, 0, m, 0, rank);
         delete v;
@@ -152,11 +153,11 @@ Triple* SVDDecomposition(Matrix *a, int rank, double eps) {
 
         // find error e = || A*V - U*SGM||
         // av = multiply(a, v);
-        // auto usgm = multiply_wrapper(u, sgm);
-        auto usgm = multiply(u, sgm);
+        auto usgm = multiply_wrapper(u, sgm);
+        // auto usgm = multiply(u, sgm);
         double revert = -1;
         Matrix* usgmt = multiply(usgm, revert);
-        auto difff = sum(av, usgmt);
+        Matrix* difff = sum(av, usgmt);
         err = matrixNorm(difff);
         // double av_diff = diff(av, av_test);
         printf("Iteration ended, error=%f, diff=%f\n", err, 0.f);
