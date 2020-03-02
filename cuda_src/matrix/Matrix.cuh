@@ -27,19 +27,20 @@ public:
     }
 
 
-    __host__ __device__
+    __host__ __device__ __forceinline__ 
     double get(int i, int j) {
         int index = m * i + j;
         return matrix[index];
     }
 
-    __host__ __device__
+    __host__ __device__ __forceinline__ 
     void set(int i, int j, double value) {
         int index = m * i + j;
         matrix[index] = value;
     }
 
     int n, m;
+private:
     double* matrix;
 };
 

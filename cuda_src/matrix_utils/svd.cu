@@ -1,4 +1,5 @@
 #include "./svd.cuh"
+#include <cublas_v2.h>
 
 
 #define CCE(errValue)                                                   \
@@ -99,8 +100,22 @@ Matrix* multiply_wrapper(Matrix* a, Matrix* b) {
     // part 1 end
 
     // part 2 start
+    // cudaError_t cudaStat; // cudaMalloc status
+//     cublasHandle_t handle; 
+//     cublasStatus_t stat = cublasCreate(&handle); // CUBLAS functions status
+//     double alpha = 1.0, beta = 0.0;
+//     cublasDgemm(handle,
+//         CUBLAS_OP_T, CUBLAS_OP_T,
+//         a->n, b->n, b->m,
+//         &alpha,
+//         a_arr, a->n,
+//         b_arr, b->n,
+//         &beta,
+//         ab_arr, a->n
+//    );
+    
     multiply<<<128, 32>>>(a_dev, b_dev, ab_dev);
-    CCE(cudaGetLastError())
+    // CCE(cudaGetLastError())
     // part 2 end 
 
     // part 3 start

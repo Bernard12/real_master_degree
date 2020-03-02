@@ -16,9 +16,10 @@ Matrix* sum(Matrix *a, Matrix *b) {
     Matrix* res = new Matrix(n, m);
 
     for (int ij = 0; ij < nm; ij++) {
-        double aij = a->matrix[ij];
-        double bij = b->matrix[ij];
-        res->matrix[ij] = aij + bij;
+        int i = ij / m, j = ij % m;
+        double aij = a->get(i, j);
+        double bij = b->get(i, j);
+        res->set(i, j, aij + bij);
     }
 
     return res;

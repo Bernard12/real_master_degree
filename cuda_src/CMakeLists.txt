@@ -12,3 +12,5 @@ add_executable(cd
   matrix_utils/operations.cu
   matrix_utils/svd.cu
 )
+
+target_link_libraries(cd -lcublas)
