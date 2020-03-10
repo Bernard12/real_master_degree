@@ -13,20 +13,27 @@
 // CATCH_CUDA_ERR(cudaMalloc(&dev_array, sizeof(int) * used_n));
 // CATCH_CUDA_ERR(cudaMemcpy(dev_array, array, sizeof(int) * used_n, cudaMemcpyHostToDevice));
 
-void copyMatrixFromHostToDevice(Matrix* hostMatrix, Matrix** deviceMatrix, double** deviceMatrixArray) {
+void copyMatrixFromHostToDevice(Matrix* hostMatrix, Matrix** deviceMatrix, double** deviceMatrixArray, int** deviceDimsArray) {
     const int n = hostMatrix->n, m = hostMatrix->m;
     Matrix* temp = new Matrix(n, m);
     delete[] temp->matrix;
+    delete[] temp->dims;
 
     const int matrix_size = sizeof(double) * n * m;
     CCE(cudaMalloc(&temp->matrix, matrix_size));
     CCE(cudaMemcpy(temp->matrix, hostMatrix->matrix, matrix_size, cudaMemcpyHostToDevice));
 
+    const int dims_size = sizeof(int) * n * m;
+    CCE(cudaMalloc(&temp->dims, dims_size));
+    CCE(cudaMemcpy(temp->dims, hostMatrix->dims, dims_size, cudaMemcpyHostToDevice));
+
     CCE(cudaMalloc(deviceMatrix, sizeof(Matrix) * 1));
     CCE(cudaMemcpy(*deviceMatrix, temp, sizeof(Matrix) * 1, cudaMemcpyHostToDevice));
 
     *deviceMatrixArray = temp->matrix;
+    *deviceDimsArray = temp->dims;
     temp->matrix = NULL;
+    temp->dims = NULL;
     delete temp;
 }
 
@@ -93,9 +100,10 @@ Matrix* multiply_wrapper(Matrix* a, Matrix* b) {
     // part 1 start
     Matrix *a_dev, *b_dev, *ab_dev;
     double *a_arr, *b_arr, *ab_arr;
-    copyMatrixFromHostToDevice(a, &a_dev, &a_arr);
-    copyMatrixFromHostToDevice(b, &b_dev, &b_arr);
-    copyMatrixFromHostToDevice(ab, &ab_dev, &ab_arr);
+    int *a_dim_arr, *b_dim_arr, *ab_dim_arr;
+    copyMatrixFromHostToDevice(a, &a_dev, &a_arr, &a_dim_arr);
+    copyMatrixFromHostToDevice(b, &b_dev, &b_arr, &b_dim_arr);
+    copyMatrixFromHostToDevice(ab, &ab_dev, &ab_arr, &ab_dim_arr);
     delete ab;
     // part 1 end
 
@@ -132,6 +140,10 @@ Matrix* multiply_wrapper(Matrix* a, Matrix* b) {
     CCE(cudaFree(b_dev));
     CCE(cudaFree(ab_arr));
     CCE(cudaFree(ab_dev));
+
+    CCE(cudaFree(a_dim_arr));
+    CCE(cudaFree(b_dim_arr));
+    CCE(cudaFree(ab_dim_arr));
     // part 4 end
     return ab;
 }
