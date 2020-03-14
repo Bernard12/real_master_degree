@@ -23,7 +23,7 @@ void copyMatrixFromHostToDevice(Matrix* hostMatrix, Matrix** deviceMatrix, doubl
     CCE(cudaMalloc(&temp->matrix, matrix_size));
     CCE(cudaMemcpy(temp->matrix, hostMatrix->matrix, matrix_size, cudaMemcpyHostToDevice));
 
-    const int dims_size = sizeof(int) * n * m;
+    const int dims_size = sizeof(int) * 2;
     CCE(cudaMalloc(&temp->dims, dims_size));
     CCE(cudaMemcpy(temp->dims, hostMatrix->dims, dims_size, cudaMemcpyHostToDevice));
 
