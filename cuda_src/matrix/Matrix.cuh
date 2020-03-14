@@ -15,10 +15,12 @@ class Matrix {
 public:
 
     __host__ __device__
-    Matrix(int n, int m) : n(n), m(m), dims_count(n * m) {
+    Matrix(int n, int m) : n(n), m(m) {
         dims = new int[2];
+        dims_count = n * m;
         dims[0] = n;
         dims[1] = m;
+        dims_count = 2;
         matrix = new double[n * m];
         for (int i = 0; i < n * m; i++) {
             matrix[i] = 0;
@@ -55,6 +57,17 @@ public:
         int index = i + dims[0] * j;
         matrix[index] = value;
     }
+
+    __host__
+    void reshape(int* new_dims, int new_dim_count) {
+        delete[] dims;
+        
+        dims_count = new_dim_count;
+        dims = new int[dims_count];
+        for (int i = 0; i < new_dim_count; i++) {
+            dims[i] = new_dims[i];
+        }
+    };
 
     int n, m;
     double* matrix;
