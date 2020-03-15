@@ -123,6 +123,20 @@ public:
         }
     };
 
+    __host__
+    Matrix* copy() {
+        Matrix* res = new Matrix(dims_count, dims);
+        int total = 1;
+        for (int i = 0; i < dims_count; i++) {
+            total *= dims[i];
+        }
+        for (int i = 0; i < total; i++) {
+            res->matrix[i] = matrix[i];
+        }
+        return res;
+    }
+
+
     int n, m;
     double* matrix;
     int* dims;
