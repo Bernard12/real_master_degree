@@ -180,6 +180,20 @@ double matrixNorm(Matrix *a) {
 }
 
 __host__ __device__
+double frobeniousNorm(Matrix* a) {
+    int total = 1;
+    for (int i = 0; i < a->dims_count; i++) {
+        total *= a->dims[i];
+    }
+    double sum = 0;
+    for (int i = 0; i < total; i++) {
+        double value = a->matrix[i];
+        sum += value * value;
+    }
+    return sqrt(sum);
+}
+
+__host__ __device__
 Matrix* vectorColNormalize(Matrix *a) {
     double sum = 1 / vectorColLength(a);
     return multiply(a, sum);
