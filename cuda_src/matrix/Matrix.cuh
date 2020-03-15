@@ -114,6 +114,24 @@ public:
 
     __host__
     void reshape(int* new_dims, int new_dims_count) {
+        int total = 1;
+        for (int i = 0; i < dims_count; i++) {
+            total *= dims[i];
+        }
+
+        int new_total = 1;
+        for (int i = 0; i < new_dims_count; i++) {
+            new_total *= new_dims[i];
+        }
+
+        if (total != new_total) {
+            printf("Tried to reshape matrix but got wrong shapes");
+            printf("Before total: %d\n", total);
+            printf("After total: %d\n", new_total);
+            exit(-1);
+        }
+
+
         delete[] dims;
         
         dims_count = new_dims_count;
