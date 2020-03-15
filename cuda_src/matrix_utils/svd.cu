@@ -205,3 +205,38 @@ Triple* SVDDecomposition(Matrix *a, int rank, double eps) {
     delete at;
     return new Triple(u, sgm, v);
 }
+
+void tensorTrain(Matrix* t, double eps) {
+    // step 1
+    double nrm = frobeniousNorm(t);
+    // step 2
+    int n_left = t->dims[0];
+    int n_right = 1;
+    for (int i = 1; i < t->dims_count; i++) {
+        n_right *= t->dims[i];
+    }
+    // step 3 
+    Matrix* B = t->copy();
+    // step 4
+    int shapes[] = { n_left, n_right };
+    B->reshape(shapes, 2);
+    delete[] shapes;
+    // step 5.1
+    int rank = min(n_left, n_right);
+    auto B_svd = SVDDecomposition(B, 10, 1e-6);
+    // step 5.2
+    double threshold = eps * nrm / sqrt(t->dims_count - 1);
+    double sigma_sum = 0;
+    int r = rank;
+    for (int i = rank - 1; i >= 0; i--) {
+        double sigma_i = B_svd->second->get(i, i);
+        double sigma_i_s = sigma_i * sigma_i;
+        if (sigma_sum + sigma_i_s > threshold) {
+            r = i + 1;
+            break;
+        } else {
+            sigma_sum += sigma_i_s;
+        }
+    }
+    // step 6
+}
