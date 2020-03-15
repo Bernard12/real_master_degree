@@ -206,7 +206,10 @@ Triple* SVDDecomposition(Matrix *a, int rank, double eps) {
     return new Triple(u, sgm, v);
 }
 
-void tensorTrain(Matrix* t, double eps) {
+vector<Matrix*> tensorTrain(Matrix* t, double eps) {
+    // initialization 
+    vector<Matrix*> res;
+    
     // step 1
     double nrm = frobeniousNorm(t);
     // step 2
@@ -218,25 +221,63 @@ void tensorTrain(Matrix* t, double eps) {
     // step 3 
     Matrix* B = t->copy();
     // step 4
-    int shapes[] = { n_left, n_right };
+    int shapes[2] = { n_left, n_right };
     B->reshape(shapes, 2);
-    delete[] shapes;
+    // delete[] shapes;
     // step 5.1
     int rank = min(n_left, n_right);
-    auto B_svd = SVDDecomposition(B, 10, 1e-6);
+    auto B_svd = SVDDecomposition(B, rank, 1e-6);
     // step 5.2
-    double threshold = eps * nrm / sqrt(t->dims_count - 1);
-    double sigma_sum = 0;
-    int r = rank;
-    for (int i = rank - 1; i >= 0; i--) {
-        double sigma_i = B_svd->second->get(i, i);
-        double sigma_i_s = sigma_i * sigma_i;
-        if (sigma_sum + sigma_i_s > threshold) {
-            r = i + 1;
-            break;
-        } else {
-            sigma_sum += sigma_i_s;
-        }
-    }
+    // TODO: need to find optimal way to approximate matrix rank!
+    // double threshold = eps * nrm / sqrt(t->dims_count - 1);
+    // double sigma_sum = 0;
+    // int r = rank;
+    // for (int i = rank - 1; i >= 0; i--) {
+    //     double sigma_i = B_svd->second->get(i, i);
+    //     double sigma_i_s = sigma_i * sigma_i;
+    //     if (sigma_sum + sigma_i_s > threshold) {
+    //         r = i + 1;
+    //         break;
+    //     } else {
+    //         sigma_sum += sigma_i_s;
+    //     }
+    // }
     // step 6
+    Matrix* G_1 = B_svd->first;
+    res.push_back(G_1);
+    delete B;
+    B = multiply(B_svd->second, transpose(B_svd->third));
+    // TODO: free B_svd memory
+    int r_cur = rank;
+    // Other G calc
+    // step 8
+    for (int i = 1; i < t->dims_count - 1; i++) {
+        // step 9
+        n_left = t->dims[i];
+        n_right /= t->dims[i];
+
+        // step 10
+        int shapes[] = { r_cur * n_left, n_right };
+        B->reshape(shapes, 2);
+
+        // step 11
+        int b_rank = min(r_cur * n_left, n_right );
+        auto b_svd = SVDDecomposition(B, b_rank, 1e-6);
+
+        // step 12
+        int G_I_shapes[] = { r_cur, t->dims[i], b_rank };
+        b_svd->first->reshape(G_I_shapes, 3);
+        Matrix* G_I = b_svd->first;
+        res.push_back(G_I);
+
+        // step 13
+        delete B;
+        B = multiply(b_svd->second, transpose(b_svd->third));
+
+        // Missing step 13.5
+        r_cur = b_rank;
+    }
+    Matrix* G_D = B->copy();
+    res.push_back(G_D);
+    return res;
 }
