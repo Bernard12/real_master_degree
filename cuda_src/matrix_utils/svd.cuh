@@ -15,5 +15,8 @@ struct Triple {
 
 pair<Matrix*, Matrix*> QRDecompositionNaive(Matrix* a);
 Triple* SVDDecomposition(Matrix *a, int rank, double eps);
+Triple* SVDDecompositionwCUB(Matrix *a, int rank, double eps);
 Triple* SVDDecompositionNaive(Matrix* a);
+
+void copyMatrixFromHostToDevice(Matrix* hostMatrix, Matrix** deviceMatrix, double** deviceMatrixArray, int** deviceDimsArray);
 #endif //MASTER_D_SVD_H

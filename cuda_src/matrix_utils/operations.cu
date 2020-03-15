@@ -43,6 +43,26 @@ void show(Matrix* mtr, int n, int m) {
     printf("\n-----------\n");
 }
 
+__host__
+void show(Matrix* mtr, int n, int m, int k) {
+
+    printf("-----TENSOR(%d, %d, %d)-------\n", n, m, k);
+
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < m; j++) {
+            for (int q = 0; q < k; q++) {
+                int* m = new int[3];
+                m[0] = i;
+                m[1] = j;
+                m[2] = q;
+                printf("(%d, %d, %d): %f\n", i, j, q, mtr->get(m, 3));
+                delete[] m;
+            }
+        }
+    }
+
+}
+
 __host__ __device__
 Matrix* multiply(Matrix *a, Matrix *b) {
     Matrix* res = new Matrix(a->n, b->m);
@@ -202,6 +222,33 @@ Matrix* hilbert(int n, int m) {
         i = ij / m;
         j = ij % m;
         res->set(ij / m, ij % m, 1. / (i + j + 2));
+    }
+    return res;
+}
+
+__host__
+Matrix* hilbert(int n, int m, int k) {
+    int * shapes = new int[3];
+    shapes[0] = n;
+    shapes[1] = m;
+    shapes[2] = k;
+    auto* res = new Matrix(3, shapes);
+    delete[] shapes;
+    // TODO:
+    // Add CUDA parallel option of loop
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < m; j++) {
+            for (int q = 0; q < k; q++) {
+                int* mm = new int[3];
+                mm[0] = i;
+                mm[1] = j;
+                mm[2] = q;
+                double val = 1./(i + j + q + 1);
+                printf("Set(%d, %d, %d) %f\n", i, j, q, val);
+                res->set(mm, 3, val);
+                delete[] mm;
+            }
+        }
     }
     return res;
 }

@@ -12,6 +12,9 @@
 __host__ __device__
 void show(Matrix* mtr, int n, int m);
 
+__host__
+void show(Matrix* mtr, int n, int m, int k);
+
 __host__ __device__
 Matrix* sum(Matrix* a, Matrix* b);
 
@@ -50,4 +53,7 @@ Matrix* subMatrix(Matrix* a, int rowStart, int rowEnd, int colStart, int colEnd)
 
 __host__ __device__
 Matrix* hilbert(int n, int m);
+
+__host__
+Matrix* hilbert(int n, int m, int k);
 #endif //MASTER_D_OPERATIONS_H
