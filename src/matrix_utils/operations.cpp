@@ -75,7 +75,7 @@ bool equals(Matrix *a, Matrix *b, double eps) {
     for (int ij = 0; ij < n * m; ij++) {
         double aij = a->get(ij / m,ij % m);
         double bij = b->get(ij / m,ij % m);
-        res = res && (abs(aij - bij) <= eps);
+        res = res && !isnan(aij) && !isnan(bij) && (abs(aij - bij) <= eps);
     }
     return res;
 }
