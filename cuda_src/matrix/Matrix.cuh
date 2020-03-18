@@ -108,7 +108,7 @@ public:
                 mlt *= dims[i];
             }
         }
-        printf("index: %d\n", index);
+        // printf("index: %d\n", index);
         matrix[index] = value;
     }
 
@@ -125,7 +125,7 @@ public:
         }
 
         if (total != new_total) {
-            printf("Tried to reshape matrix but got wrong shapes");
+            printf("Tried to reshape matrix but got wrong shapes\n");
             printf("Before total: %d\n", total);
             printf("After total: %d\n", new_total);
             exit(-1);

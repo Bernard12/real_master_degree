@@ -258,7 +258,7 @@ Matrix* hilbert(int n, int m, int k) {
                 mm[1] = j;
                 mm[2] = q;
                 double val = 1./(i + j + q + 1);
-                printf("Set(%d, %d, %d) %f\n", i, j, q, val);
+                // printf("Set(%d, %d, %d) %f\n", i, j, q, val);
                 res->set(mm, 3, val);
                 delete[] mm;
             }

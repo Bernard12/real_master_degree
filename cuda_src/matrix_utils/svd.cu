@@ -1,5 +1,7 @@
 #include "./svd.cuh"
 #include <cublas_v2.h>
+#include <cusolverDn.h>
+#define STEP(i) printf("Step %d\n", i);
 
 
 #define CCE(errValue)                                                   \
@@ -206,27 +208,107 @@ Triple* SVDDecomposition(Matrix *a, int rank, double eps) {
     return new Triple(u, sgm, v);
 }
 
+// Only for rectangal matrix
+Triple* SVDDecompositionwCUB(Matrix *a) {
+    if (a->dims_count != 2) {
+        printf("Cannot perform SVD for non rectangular matrix!");
+        exit(-1);
+    }
+    cusolverDnHandle_t cusolverH ; // cusolver handle
+    cusolverStatus_t cusolvstatus = cusolverDnCreate(&cusolverH);
+    printf("CUSOLVE %d\n", cusolvstatus);
+    cublasHandle_t cublasH; // cublas handle
+
+    Matrix *a_dev;
+    double *a_arr;
+    int *a_dim_arr;
+    copyMatrixFromHostToDevice(a, &a_dev, &a_arr, &a_dim_arr);
+
+    int n = a->dims[0], m = a->dims[1];
+    int rank = min(n, m);
+    // Matrix U SIGMA V on host
+    Matrix *U = new Matrix(n, rank), *S = new Matrix(rank, rank), *VT = new Matrix(rank, m);
+
+    // Matrixes on device
+    Matrix *U_dev, *VT_dev;
+    double *U_arr, *VT_arr;
+    int *U_dim_arr, *VT_dim_arr;
+
+    // array for singular values
+    double* s_arr;
+    CCE(cudaMalloc(&s_arr, sizeof(double) * rank));
+
+    copyMatrixFromHostToDevice(U, &U_dev, &U_arr, &U_dim_arr);
+    copyMatrixFromHostToDevice(VT, &VT_dev, &VT_arr, &VT_dim_arr);
+
+    int lda = m;
+    int ldu = m;
+    int ldvt = rank;
+
+    int info_gpu = 0;
+
+    int lwork = 0;
+    cusolverDnDgesvd_bufferSize(cusolverH, m, n, &lwork);
+    double* work;
+    CCE(cudaMalloc(&work, sizeof(double) * lwork));
+
+    double* d_rwork;
+    CCE(cudaMalloc(&d_rwork, sizeof(double) * (rank - 1)));
+    int* info;
+
+    cusolverStatus_t cusolver_status = cusolverDnDgesvd(
+        cusolverH,
+        'A', 'A',
+        n, m,
+        a_arr, lda,
+        s_arr,
+        U_arr, ldu,
+        VT_arr,  ldvt,
+        work, lwork,
+        d_rwork, info
+    );
+    CCE(cudaGetLastError());
+    printf("%d\n", cusolver_status == CUSOLVER_STATUS_INTERNAL_ERROR);
+
+    // CCE(cudaMemcpy(&info_gpu, info , sizeof (int), cudaMemcpyDeviceToHost));
+    // printf("[STATUS] After cusolver svd: %d", info_gpu);
+
+    delete U;
+    copyMatrixFromDeviceToHost(U_arr, &U, n, rank);
+
+    return new Triple(U, NULL, NULL);
+}
+
 vector<Matrix*> tensorTrain(Matrix* t, double eps) {
     // initialization 
     vector<Matrix*> res;
     
     // step 1
+    STEP(1)
     double nrm = frobeniousNorm(t);
     // step 2
+    STEP(2)
     int n_left = t->dims[0];
     int n_right = 1;
     for (int i = 1; i < t->dims_count; i++) {
         n_right *= t->dims[i];
     }
     // step 3 
+    STEP(3)
     Matrix* B = t->copy();
     // step 4
+    STEP(4)
     int shapes[2] = { n_left, n_right };
     B->reshape(shapes, 2);
+    // show(B, n_left, n_right);
     // delete[] shapes;
     // step 5.1
+    STEP(5)
     int rank = min(n_left, n_right);
+    // TODO: use cublas SVD
     auto B_svd = SVDDecomposition(B, rank, 1e-6);
+    show(B_svd->first, n_left, rank);
+    CCE(cudaGetLastError())
     // step 5.2
     // TODO: need to find optimal way to approximate matrix rank!
     // double threshold = eps * nrm / sqrt(t->dims_count - 1);
@@ -243,6 +325,7 @@ vector<Matrix*> tensorTrain(Matrix* t, double eps) {
     //     }
     // }
     // step 6
+    STEP(6)
     Matrix* G_1 = B_svd->first;
     res.push_back(G_1);
     delete B;
@@ -251,32 +334,39 @@ vector<Matrix*> tensorTrain(Matrix* t, double eps) {
     int r_cur = rank;
     // Other G calc
     // step 8
+    STEP(8)
     for (int i = 1; i < t->dims_count - 1; i++) {
         // step 9
+        STEP(9)
         n_left = t->dims[i];
         n_right /= t->dims[i];
 
         // step 10
+        STEP(10)
         int shapes[] = { r_cur * n_left, n_right };
         B->reshape(shapes, 2);
 
         // step 11
+        STEP(11)
         int b_rank = min(r_cur * n_left, n_right );
         auto b_svd = SVDDecomposition(B, b_rank, 1e-6);
 
         // step 12
+        STEP(12)
         int G_I_shapes[] = { r_cur, t->dims[i], b_rank };
         b_svd->first->reshape(G_I_shapes, 3);
         Matrix* G_I = b_svd->first;
         res.push_back(G_I);
 
         // step 13
+        STEP(13)
         delete B;
         B = multiply(b_svd->second, transpose(b_svd->third));
 
         // Missing step 13.5
         r_cur = b_rank;
     }
+    STEP(14)
     Matrix* G_D = B->copy();
     res.push_back(G_D);
     return res;
