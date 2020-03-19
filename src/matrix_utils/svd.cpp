@@ -46,7 +46,7 @@ pair<Matrix*, Matrix*> QRDecompositionNaive(Matrix *a) {
         auto nai = vectorColNormalize(ai);
         for (int k = 0; k < n; k++) {
             double nk0 = nai->get(k, 0);
-            Q->set(k, i, nk0);
+            Q->set(k, i, isnan(nk0) ? 0 : nk0);
         }
 //        Matrix* qk = subMatrix(Q, 0, n + 0, i + 0, i + 1);
         delete ai;
@@ -59,7 +59,58 @@ pair<Matrix*, Matrix*> QRDecompositionNaive(Matrix *a) {
     return make_pair(Q, R);
 }
 
-Triple* SVDDecomposition(Matrix *a, int rank, double eps) {
+Triple* SVDDecomposition(Matrix *a) {
+    // LAPACKE_dgesvd();
+    // A is (n, m) matrix in row-major
+    int rows = a->shape().first, cols = a->shape().second;
+
+    char jobu = 'S';
+    char jobvt = 'S';
+
+    // ld<somthing> is col size for COL_MAJOR and row size for ROW_MAJOR
+    int lda = rows;
+
+    int rank = min(rows, cols);
+
+    auto* s = new double[rank];
+
+    auto* u = new double[rows * rank];
+    int ldu = rows;
+
+    auto* vt = new double[rank * cols];
+    int ldvt = rank;
+
+    double superb[rank - 1];
+
+    LAPACKE_dgesvd(
+            LAPACK_COL_MAJOR,
+            jobu, jobvt,
+            rows, cols,
+            a->matrix, lda,
+            s,
+            u, ldu,
+            vt, ldvt,
+            superb
+    );
+
+    Matrix* U = new Matrix(rows, rank);
+    delete[] U->matrix;
+    U->matrix = u;
+
+    Matrix* VT = new Matrix(rank, cols);
+    delete[] VT->matrix;
+    VT->matrix = vt;
+
+    Matrix* S = new Matrix(rank, rank);
+    for (int i = 0; i < rank; i++) {
+        S->set(i, i, s[i]);
+    }
+    delete[] s;
+
+    return new Triple(U, S, VT);
+}
+
+Triple* SVDDecompositionNaive(Matrix* a, int rank, double eps) {
     auto a_shape = a->shape();
     int n = a_shape.first;
     int m = a_shape.second;
