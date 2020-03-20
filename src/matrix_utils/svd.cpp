@@ -20,7 +20,7 @@ double getBiggestEugenValueOfSquareMatrix(Matrix *a) {
     return multiply(ut, tmp)->get(0, 0);
 }
 
-pair<Matrix*, Matrix*> QRDecompositionNaive(Matrix *a) {
+pair<Matrix *, Matrix *> QRDecompositionNaive(Matrix *a) {
     auto a_shape = a->shape();
     int n = a_shape.first;
     int m = a_shape.second;
@@ -30,10 +30,10 @@ pair<Matrix*, Matrix*> QRDecompositionNaive(Matrix *a) {
         for (int k = 0; k < i; k++) {
             auto qk = subMatrix(Q, 0, n + 0, k + 0, k + 1);
             auto qkt = transpose(qk);
-            Matrix* tempMultiply = multiply(qkt, ai);
+            Matrix *tempMultiply = multiply(qkt, ai);
             double v = -1 * tempMultiply->get(0, 0);
             auto tmp = multiply(qk, v);
-            Matrix* temp_ai = sum(ai, tmp);
+            Matrix *temp_ai = sum(ai, tmp);
             delete ai;
             ai = temp_ai;
             R->set(k, i, -1 * v);
@@ -59,7 +59,7 @@ pair<Matrix*, Matrix*> QRDecompositionNaive(Matrix *a) {
     return make_pair(Q, R);
 }
 
-Triple* SVDDecomposition(Matrix *a) {
+Triple *SVDDecomposition(Matrix *a) {
     // LAPACKE_dgesvd();
     // A is (n, m) matrix in row-major
     int rows = a->shape().first, cols = a->shape().second;
@@ -72,12 +72,12 @@ Triple* SVDDecomposition(Matrix *a) {
 
     int rank = min(rows, cols);
 
-    auto* s = new double[rank];
+    auto *s = new double[rank];
 
-    auto* u = new double[rows * rank];
+    auto *u = new double[rows * rank];
     int ldu = rows;
 
-    auto* vt = new double[rank * cols];
+    auto *vt = new double[rank * cols];
     int ldvt = rank;
 
     double superb[rank - 1];
@@ -93,15 +93,15 @@ Triple* SVDDecomposition(Matrix *a) {
             superb
     );
 
-    Matrix* U = new Matrix(rows, rank);
+    Matrix *U = new Matrix(rows, rank);
     delete[] U->matrix;
     U->matrix = u;
 
-    Matrix* VT = new Matrix(rank, cols);
+    Matrix *VT = new Matrix(rank, cols);
     delete[] VT->matrix;
     VT->matrix = vt;
 
-    Matrix* S = new Matrix(rank, rank);
+    Matrix *S = new Matrix(rank, rank);
     for (int i = 0; i < rank; i++) {
         S->set(i, i, s[i]);
     }
@@ -110,7 +110,7 @@ Triple* SVDDecomposition(Matrix *a) {
     return new Triple(U, S, VT);
 }
 
-Triple* SVDDecompositionNaive(Matrix* a, int rank, double eps) {
+Triple *SVDDecompositionNaive(Matrix *a, int rank, double eps) {
     auto a_shape = a->shape();
     int n = a_shape.first;
     int m = a_shape.second;
@@ -121,18 +121,18 @@ Triple* SVDDecompositionNaive(Matrix* a, int rank, double eps) {
         auto av = multiply(a, v);
         auto qr_av = QRDecompositionNaive(av);
 
-        Matrix* u_tmp = subMatrix(qr_av.first, 0, n, 0, rank);
+        Matrix *u_tmp = subMatrix(qr_av.first, 0, n, 0, rank);
         delete u;
         u = u_tmp;
 
         auto atu = multiply(at, u);
         auto qr_atu = QRDecompositionNaive(atu);
 
-        Matrix* v_tmp = subMatrix(qr_atu.first, 0, m, 0, rank);
+        Matrix *v_tmp = subMatrix(qr_atu.first, 0, m, 0, rank);
         delete v;
         v = v_tmp;
 
-        Matrix* sgm_tmp = subMatrix(qr_atu.second, 0, rank, 0, rank);
+        Matrix *sgm_tmp = subMatrix(qr_atu.second, 0, rank, 0, rank);
         delete sgm;
         sgm = sgm_tmp;
 
@@ -140,7 +140,7 @@ Triple* SVDDecompositionNaive(Matrix* a, int rank, double eps) {
 //        av = multiply(a, v);
         auto usgm = multiply(u, sgm);
         double revert = -1;
-        Matrix* usgmt = multiply(usgm, revert);
+        Matrix *usgmt = multiply(usgm, revert);
         auto diff = sum(av, usgmt);
         err = matrixNorm(diff);
 
@@ -156,4 +156,50 @@ Triple* SVDDecompositionNaive(Matrix* a, int rank, double eps) {
     }
     delete at;
     return new Triple(u, sgm, v);
+}
+
+vector<Matrix *> TTDecomposition(Matrix *a, double eps) {
+    vector<Matrix *> res;
+
+    double norm = frobeniousMatrixNorm(a);
+    double threshold = norm * eps / sqrt(a->shape_length - 1);
+
+    int n_left = a->real_shape[0];
+    int n_right = 1;
+    for (int i = 1; i < a->shape_length; i++) {
+        n_right *= a->real_shape[i];
+    }
+
+    vector<int> shape = {n_left, n_right};
+    Matrix *M = a->copy();
+    M->reshape(shape);
+
+    // U S VT
+    auto svd_m = SVDDecomposition(M);
+    res.push_back(svd_m->first);
+    int r = svd_m->second->real_shape[0];
+    M = multiply(svd_m->second, svd_m->third);
+
+    for (int i = 1; i < a->shape_length - 1; i++) {
+        n_left = a->real_shape[i];
+        n_right = n_right / a->real_shape[i];
+
+        vector<int> next_shape = {r * n_left, n_right};
+        M->reshape(next_shape);
+
+        auto svd_m_next = SVDDecomposition(M);
+        int r_cur = svd_m_next->second->real_shape[0];
+
+        Matrix *GK = svd_m_next->first;
+        vector<int> gk_shape = {r, n_left, r_cur};
+        GK->reshape(gk_shape);
+
+        res.push_back(GK);
+        r = r_cur;
+
+        M = multiply(svd_m_next->second, svd_m_next->third);
+    }
+
+    res.push_back(M);
+    return res;
 }

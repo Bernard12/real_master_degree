@@ -18,4 +18,5 @@ double getBiggestSingularValueOfSquareMatrix(Matrix *a);
 pair<Matrix*, Matrix*> QRDecompositionNaive(Matrix* a);
 Triple* SVDDecomposition(Matrix *a);
 Triple* SVDDecompositionNaive(Matrix* a, int rank, double eps);
+vector<Matrix*> TTDecomposition(Matrix* a, double eps);
 #endif //MASTER_D_SVD_H

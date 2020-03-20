@@ -36,4 +36,5 @@ Matrix* subMatrix(Matrix* a, int rowStart, int rowEnd, int colStart, int colEnd)
 
 Matrix* hilbert(int n, int m);
 
+Matrix* hilbert(int n, int m, int k);
 #endif //MASTER_D_OPERATIONS_H

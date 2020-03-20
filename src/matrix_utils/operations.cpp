@@ -189,3 +189,19 @@ Matrix* hilbert(int n, int m) {
     }
     return res;
 }
+
+Matrix* hilbert(int n, int m, int k) {
+    auto* res = new Matrix(n, m * k);
+    vector<int> bla = { n, m, k };
+    res->reshape(bla);
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++) {
+            for (int q = 0; q < n; q++) {
+                int index = i + n * j + n * m * q;
+                double val = 1. / (i + j + q + 1);
+                res->matrix[index] = val;
+            }
+        }
+    }
+    return res;
+}
