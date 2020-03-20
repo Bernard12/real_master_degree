@@ -63,6 +63,25 @@ public:
         }
     }
 
+    Matrix* copy() {
+        Matrix* res = new Matrix(0, 0);
+        res->n = n;
+        res->m = m;
+
+        res->shape_length = shape_length;
+        res->total_element_count = total_element_count;
+
+        res->matrix = new double[total_element_count];
+        for (int i = 0; i < total_element_count; ++i) {
+            res->matrix[i] = matrix[i];
+        }
+        res->real_shape = new int[shape_length];
+        for (int j = 0; j < shape_length; ++j) {
+            res->real_shape[j] = real_shape[j];
+        }
+        return res;
+    }
+
     double get(int i, int j) {
         int index = i + real_shape[0] * j;
         return matrix[index];
