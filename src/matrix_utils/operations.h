@@ -24,6 +24,8 @@ double vectorColLength(Matrix* a);
 
 double matrixNorm(Matrix* a);
 
+double frobeniousMatrixNorm(Matrix* a);
+
 Matrix* randomMatrix(int n, int m);
 
 Matrix* vectorColNormalize(Matrix* a);

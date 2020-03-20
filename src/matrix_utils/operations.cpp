@@ -128,6 +128,17 @@ double matrixNorm(Matrix *a) {
     return sqrt(sum);
 }
 
+double frobeniousMatrixNorm(Matrix* a) {
+    double sum = 0;
+
+    for (int i = 0; i < a->total_element_count; i++) {
+        double val = a->matrix[i];
+        sum += val * val;
+    }
+
+    return sqrt(sum);
+}
+
 Matrix* vectorColNormalize(Matrix *a) {
     auto a_shape = a->shape();
     if (a_shape.second != 1) {
