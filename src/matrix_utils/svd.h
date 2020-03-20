@@ -19,4 +19,6 @@ pair<Matrix*, Matrix*> QRDecompositionNaive(Matrix* a);
 Triple* SVDDecomposition(Matrix *a);
 Triple* SVDDecompositionNaive(Matrix* a, int rank, double eps);
 vector<Matrix*> TTDecomposition(Matrix* a, double eps);
+
+double getValueFromTrain(vector<Matrix*> m, vector<int> indexes);
 #endif //MASTER_D_SVD_H

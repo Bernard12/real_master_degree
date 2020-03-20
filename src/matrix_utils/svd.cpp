@@ -203,3 +203,16 @@ vector<Matrix *> TTDecomposition(Matrix *a, double eps) {
     res.push_back(M);
     return res;
 }
+
+double getValueFromTrain(vector<Matrix *> m, vector<int> indexes) {
+    double res = 0;
+    Matrix *first = subMatrix(m[0], indexes[0], indexes[0] + 1, 0, m[0]->m());
+    for (int i = 1; i < m.size() - 1; i++) {
+        Matrix *cur = m[i]->get2DshapeFrom3d(indexes[i]);
+        first = multiply(first, cur);
+    }
+    Matrix *last = subMatrix(m[m.size() - 1], 0, m[m.size() - 1]->n(), indexes[indexes.size() - 1],
+                             indexes[indexes.size() - 1] + 1);
+    first = multiply(first, last);
+    return first->matrix[0];
+}

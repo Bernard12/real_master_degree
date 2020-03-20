@@ -96,9 +96,9 @@ public:
             exit(14);
         }
         Matrix *res = new Matrix(real_shape[0], real_shape[2]);
-        for (int i = 0; i < real_shape[1]; i++) {
-            for (int j = 0; j < real_shape[2]; j++) {
-                res->set(i, j, this->get(x, i, j));
+        for (int i = 0; i < real_shape[0]; i++) {
+            for (int j = 0; j < real_shape[1]; j++) {
+                res->set(i, j, this->get(i, x, j));
             }
         }
         return res;
