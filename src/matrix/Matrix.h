@@ -38,13 +38,38 @@ public:
         return make_pair(this->n, this->m);
     }
 
+    void reshape(vector<int> new_shapes) {
+        int new_total = 1;
+        for(int new_shape : new_shapes) {
+            new_total *= new_shape;
+        }
+
+        if (new_total != total_element_count) {
+            printf("Cannot reshape, new_total before:%d, new_total after: %d\n", total_element_count, new_total);
+            exit(-1);
+        }
+
+        delete[] real_shape;
+
+        shape_length = new_shapes.size();
+        real_shape = new int[new_shapes.size()];
+        for(int i = 0; i < new_shapes.size(); i++) {
+            real_shape[i] = new_shapes[i];
+        }
+
+        if (new_shapes.size() == 2) {
+            n = new_shapes[0];
+            m = new_shapes[1];
+        }
+    }
+
     double get(int i, int j) {
-        int index = i + n * j;
+        int index = i + real_shape[0] * j;
         return matrix[index];
     }
 
     void set(int i, int j, double value) {
-        int index = i + n * j;
+        int index = i + real_shape[0] * j;
         matrix[index] = value;
     }
 
