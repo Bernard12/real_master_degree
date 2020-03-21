@@ -175,7 +175,8 @@ vector<Matrix *> TTDecomposition(Matrix *a, double eps) {
     M->reshape(shape);
 
     // U S VT
-    auto svd_m = SVDDecomposition(M);
+    auto svd_m_full = SVDDecomposition(M);
+    auto svd_m = trunkSVDResultsForTT(svd_m_full, eps);
     res.push_back(svd_m->first);
     int r = svd_m->second->real_shape[0];
     M = multiply(svd_m->second, svd_m->third);
@@ -187,7 +188,8 @@ vector<Matrix *> TTDecomposition(Matrix *a, double eps) {
         vector<int> next_shape = {r * n_left, n_right};
         M->reshape(next_shape);
 
-        auto svd_m_next = SVDDecomposition(M);
+        auto svd_m_next_full = SVDDecomposition(M);
+        auto svd_m_next = trunkSVDResultsForTT(svd_m_next_full, eps);
         int r_cur = svd_m_next->second->real_shape[0];
 
         Matrix *GK = svd_m_next->first;
@@ -215,4 +217,22 @@ double getValueFromTrain(vector<Matrix *> m, vector<int> indexes) {
                              indexes[indexes.size() - 1] + 1);
     first = multiply(first, last);
     return first->matrix[0];
+}
+
+// U S VT
+Triple* trunkSVDResultsForTT(Triple* svd, double eps) {
+    int rank = svd->second->n();
+    double sum = 0;
+    for (int i = rank - 1; i >= 1; i--) {
+        double val = svd->second->get(i, i);
+        if (sum + val > eps) {
+            break;
+        }
+        sum += val;
+        rank--;
+    }
+    Matrix* U = subMatrix(svd->first, 0, svd->first->n(), 0, rank);
+    Matrix* S = subMatrix(svd->second, 0, rank, 0, rank);
+    Matrix* VT = subMatrix(svd->third, 0, rank, 0, svd->third->m());
+    return new Triple(U, S, VT);
 }
