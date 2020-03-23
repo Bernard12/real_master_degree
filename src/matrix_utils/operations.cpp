@@ -75,7 +75,7 @@ bool equals(Matrix *a, Matrix *b, double eps) {
     for (int ij = 0; ij < n * m; ij++) {
         double aij = a->get(ij / m,ij % m);
         double bij = b->get(ij / m,ij % m);
-        res = res && (abs(aij - bij) <= eps);
+        res = res && !isnan(aij) && !isnan(bij) && (abs(aij - bij) <= eps);
     }
     return res;
 }
@@ -128,6 +128,17 @@ double matrixNorm(Matrix *a) {
     return sqrt(sum);
 }
 
+double frobeniousMatrixNorm(Matrix* a) {
+    double sum = 0;
+
+    for (int i = 0; i < a->total_element_count; i++) {
+        double val = a->matrix[i];
+        sum += val * val;
+    }
+
+    return sqrt(sum);
+}
+
 Matrix* vectorColNormalize(Matrix *a) {
     auto a_shape = a->shape();
     if (a_shape.second != 1) {
@@ -175,6 +186,22 @@ Matrix* hilbert(int n, int m) {
         i = ij / m;
         j = ij % m;
         res->set(ij / m, ij % m, 1. / (i + j + 2));
+    }
+    return res;
+}
+
+Matrix* hilbert(int n, int m, int k) {
+    auto* res = new Matrix(n, m * k);
+    vector<int> bla = { n, m, k };
+    res->reshape(bla);
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++) {
+            for (int q = 0; q < n; q++) {
+                int index = i + n * j + n * m * q;
+                double val = 1. / (i + j + q + 1);
+                res->matrix[index] = val;
+            }
+        }
     }
     return res;
 }

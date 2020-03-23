@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.5)
 project(master_d)
+find_package(LAPACK)
 
 set(CMAKE_CXX_STANDARD 11)
 
@@ -13,4 +14,5 @@ add_executable(master_d
         src/matrix_utils/svd.cpp
         )
 
+target_link_libraries(master_d -llapacke)
 add_subdirectory(tests)

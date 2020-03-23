@@ -1,23 +1,39 @@
 #include <iostream>
+#include <lapacke.h>
 #include "matrix_utils/operations.h"
 #include "matrix_utils/svd.h"
 #include "matrix/Matrix.h"
 
 int main() {
-    Matrix* m = hilbert(2, 2);
-//    Matrix* m2 = hilbert(2, 2);
-//    auto qr = QRDecompositionNaive(m);
-//    Matrix* mt = multiply(qr.first, qr.second);
-//    cout << diff(m, mt);
+    Matrix *m = hilbert(3, 3, 3);
+    auto tt = TTDecomposition(m, 1e-7);
+//    Matrix *m2 = m->copy();
 //    m->show();
-//    m->set(2, 1, 5);
+//    vector<int> bla = {2, 3};
+//    m->reshape(bla);
 //    m->show();
-//    cout << diff(m, mt);
-    m->show();
-//    mt->show();
-//    sum(m, m2)->show();
-//    multiply(m, 2)->show();
-//    subMatrix(m, 0, 2, 0, 2)->show();
-//    transpose(m)->show();
+//    Matrix *m = new Matrix(2, 2);
+//    m->set(0, 0, 1);
+//    m->set(0, 1, 2);
+//    m->set(1, 0, 2);
+//    m->set(1, 1, 4);
+////    m->show();
+//    auto bla = SVDDecomposition(m);
+//    bla->first->show();
+//    bla->second->show();
+//    bla->third->show();
+//    Matrix *temp = multiply(bla->first, bla->second);
+//    Matrix *temp2 = multiply(temp, bla->third);
+//    temp2->show();
+//    delete m;
+//    delete m2;
+//    tt[0]->show();
+//    tt[1]->get2DshapeFrom3d(0)->show();
+//    tt[1]->get2DshapeFrom3d(1)->show();
+//    tt[1]->get2DshapeFrom3d(2)->show();
+//    tt[2]->show();
+//    tt[0]->show();
+    vector<int> indexes = { 1, 1, 1 };
+    printf("%f", getValueFromTrain(tt, indexes));
     return 0;
 }
