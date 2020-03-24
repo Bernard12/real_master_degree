@@ -176,10 +176,20 @@ vector<Matrix *> TTDecomposition(Matrix *a, double eps) {
 
     // U S VT
     auto svd_m_full = SVDDecomposition(M);
+
+    delete svd_m_full->first;
+    delete svd_m_full->second;
+    delete svd_m_full->third;
+    delete svd_m_full;
+
     auto svd_m = trunkSVDResultsForTT(svd_m_full, eps);
     res.push_back(svd_m->first);
     int r = svd_m->second->real_shape[0];
+    delete M;
     M = multiply(svd_m->second, svd_m->third);
+    delete svd_m->second;
+    delete svd_m->third;
+    delete svd_m;
 
     for (int i = 1; i < a->shape_length - 1; i++) {
         n_left = a->real_shape[i];
@@ -189,6 +199,10 @@ vector<Matrix *> TTDecomposition(Matrix *a, double eps) {
         M->reshape(next_shape);
 
         auto svd_m_next_full = SVDDecomposition(M);
+        delete svd_m_next_full->first;
+        delete svd_m_next_full->second;
+        delete svd_m_next_full->third;
+        delete svd_m_next_full;
         auto svd_m_next = trunkSVDResultsForTT(svd_m_next_full, eps);
         int r_cur = svd_m_next->second->real_shape[0];
 
@@ -199,7 +213,12 @@ vector<Matrix *> TTDecomposition(Matrix *a, double eps) {
         res.push_back(GK);
         r = r_cur;
 
+        delete M;
         M = multiply(svd_m_next->second, svd_m_next->third);
+
+        delete svd_m_next->second;
+        delete svd_m_next->third;
+        delete svd_m_next;
     }
 
     res.push_back(M);
@@ -207,16 +226,27 @@ vector<Matrix *> TTDecomposition(Matrix *a, double eps) {
 }
 
 double getValueFromTrain(vector<Matrix *> m, vector<int> indexes) {
-    double res = 0;
     Matrix *first = subMatrix(m[0], indexes[0], indexes[0] + 1, 0, m[0]->m());
     for (int i = 1; i < m.size() - 1; i++) {
         Matrix *cur = m[i]->get2DshapeFrom3d(indexes[i]);
-        first = multiply(first, cur);
+
+        auto temp_first = multiply(first, cur);
+        delete first;
+        first = temp_first;
+
+        delete cur;
     }
     Matrix *last = subMatrix(m[m.size() - 1], 0, m[m.size() - 1]->n(), indexes[indexes.size() - 1],
                              indexes[indexes.size() - 1] + 1);
-    first = multiply(first, last);
-    return first->matrix[0];
+
+    auto temp_first = multiply(first, last);
+
+    double res = temp_first->matrix[0];
+
+    delete first;
+    delete last;
+    delete temp_first;
+    return res;
 }
 
 // U S VT
