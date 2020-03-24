@@ -16,26 +16,26 @@
 // CATCH_CUDA_ERR(cudaMemcpy(dev_array, array, sizeof(int) * used_n, cudaMemcpyHostToDevice));
 
 void copyMatrixFromHostToDevice(Matrix* hostMatrix, Matrix** deviceMatrix, double** deviceMatrixArray, int** deviceDimsArray) {
-    const int n = hostMatrix->n, m = hostMatrix->m;
+    const int n = hostMatrix->n(), m = hostMatrix->m();
     Matrix* temp = new Matrix(n, m);
     delete[] temp->matrix;
-    delete[] temp->dims;
+    delete[] temp->real_shape;
 
     const int matrix_size = sizeof(double) * n * m;
     CCE(cudaMalloc(&temp->matrix, matrix_size));
     CCE(cudaMemcpy(temp->matrix, hostMatrix->matrix, matrix_size, cudaMemcpyHostToDevice));
 
     const int dims_size = sizeof(int) * 2;
-    CCE(cudaMalloc(&temp->dims, dims_size));
-    CCE(cudaMemcpy(temp->dims, hostMatrix->dims, dims_size, cudaMemcpyHostToDevice));
+    CCE(cudaMalloc(&temp->real_shape, dims_size));
+    CCE(cudaMemcpy(temp->real_shape, hostMatrix->real_shape, dims_size, cudaMemcpyHostToDevice));
 
     CCE(cudaMalloc(deviceMatrix, sizeof(Matrix) * 1));
     CCE(cudaMemcpy(*deviceMatrix, temp, sizeof(Matrix) * 1, cudaMemcpyHostToDevice));
 
     *deviceMatrixArray = temp->matrix;
-    *deviceDimsArray = temp->dims;
+    *deviceDimsArray = temp->real_shape;
     temp->matrix = NULL;
-    temp->dims = NULL;
+    temp->real_shape = NULL;
     delete temp;
 }
 
@@ -57,8 +57,8 @@ void copyMatrixFromDeviceToHost(double* deviceMatrixArray, Matrix** hostMatrix, 
     @return pair of Q and R matrix on host
 */
 pair<Matrix*, Matrix*> QRDecompositionNaive(Matrix *a) {
-    int n = a->n;
-    int m = a->m;
+    int n = a->n();
+    int m = a->m();
     Matrix* Q = new Matrix(n, m);
     Matrix* R = new Matrix(m, m);
     for (int i = 0; i < m; i++) {
@@ -97,7 +97,7 @@ Matrix* multiply_wrapper(Matrix* a, Matrix* b) {
     // 3. copy results to host
     // 4. free allocated device memory
 
-    Matrix* ab = new Matrix(a->n, b->m);
+    Matrix* ab = new Matrix(a->n(), b->m());
 
     // part 1 start
     Matrix *a_dev, *b_dev, *ab_dev;
@@ -131,7 +131,7 @@ Matrix* multiply_wrapper(Matrix* a, Matrix* b) {
     // part 2 end 
 
     // part 3 start
-    copyMatrixFromDeviceToHost(ab_arr, &ab, a->n, b->m);
+    copyMatrixFromDeviceToHost(ab_arr, &ab, a->n(), b->m());
     // part 3 end 
 
 
@@ -151,8 +151,8 @@ Matrix* multiply_wrapper(Matrix* a, Matrix* b) {
 }
 
 Triple* SVDDecomposition(Matrix *a, int rank, double eps) {
-    int n = a->n;
-    int m = a->m;
+    int n = a->n();
+    int m = a->m();
     auto u = randomMatrix(n, rank), sgm = randomMatrix(rank, rank), v = randomMatrix(m, rank);
     auto at = transpose(a);
     double err = 1e9;
@@ -210,7 +210,7 @@ Triple* SVDDecomposition(Matrix *a, int rank, double eps) {
 
 // Only for rectangal matrix
 Triple* SVDDecompositionwCUB(Matrix *a) {
-    if (a->dims_count != 2) {
+    if (a->shape_length!= 2) {
         printf("Cannot perform SVD for non rectangular matrix!");
         exit(-1);
     }
@@ -224,7 +224,7 @@ Triple* SVDDecompositionwCUB(Matrix *a) {
     int *a_dim_arr;
     copyMatrixFromHostToDevice(a, &a_dev, &a_arr, &a_dim_arr);
 
-    int n = a->dims[0], m = a->dims[1];
+    int n = a->real_shape[0], m = a->real_shape[1];
     int rank = min(n, m);
     // Matrix U SIGMA V on host
     Matrix *U = new Matrix(n, rank), *S = new Matrix(rank, rank), *VT = new Matrix(rank, m);
@@ -288,10 +288,10 @@ vector<Matrix*> tensorTrain(Matrix* t, double eps) {
     double nrm = frobeniousNorm(t);
     // step 2
     STEP(2)
-    int n_left = t->dims[0];
+    int n_left = t->real_shape[0];
     int n_right = 1;
-    for (int i = 1; i < t->dims_count; i++) {
-        n_right *= t->dims[i];
+    for (int i = 1; i < t->shape_length; i++) {
+        n_right *= t->real_shape[i];
     }
     // step 3 
     STEP(3)
@@ -335,11 +335,11 @@ vector<Matrix*> tensorTrain(Matrix* t, double eps) {
     // Other G calc
     // step 8
     STEP(8)
-    for (int i = 1; i < t->dims_count - 1; i++) {
+    for (int i = 1; i < t->shape_length - 1; i++) {
         // step 9
         STEP(9)
-        n_left = t->dims[i];
-        n_right /= t->dims[i];
+        n_left = t->real_shape[i];
+        n_right /= t->real_shape[i];
 
         // step 10
         STEP(10)
@@ -353,7 +353,7 @@ vector<Matrix*> tensorTrain(Matrix* t, double eps) {
 
         // step 12
         STEP(12)
-        int G_I_shapes[] = { r_cur, t->dims[i], b_rank };
+        int G_I_shapes[] = { r_cur, t->real_shape[i], b_rank };
         b_svd->first->reshape(G_I_shapes, 3);
         Matrix* G_I = b_svd->first;
         res.push_back(G_I);
