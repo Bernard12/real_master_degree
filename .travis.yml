@@ -28,6 +28,9 @@ matrix:
             - python-yaml
             - lcov
             - libopencv-dev
+            - libblas-dev
+            - liblapack-dev
+            - liblapacke-dev
           sources: &precise_latest_boost_sources
             - ubuntu-toolchain-r-test
             - llvm-toolchain-precise-3.7
