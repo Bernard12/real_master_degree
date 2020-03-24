@@ -230,7 +230,7 @@ Matrix* hilbert(int n, int m) {
     for (int ij = 0; ij < n * m; ij++) {
         i = ij / m;
         j = ij % m;
-        res->set(ij / m, ij % m, 1. / (i + j + 2));
+        res->set(ij / m, ij % m, 1. / (i + j + 1));
     }
     return res;
 }

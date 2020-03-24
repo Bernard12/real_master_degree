@@ -214,69 +214,72 @@ Triple* SVDDecompositionwCUB(Matrix *a) {
         printf("Cannot perform SVD for non rectangular matrix!");
         exit(-1);
     }
-    cusolverDnHandle_t cusolverH ; // cusolver handle
+    cusolverDnHandle_t cusolverH; // cusolver handle
     cusolverStatus_t cusolvstatus = cusolverDnCreate(&cusolverH);
-    printf("CUSOLVE %d\n", cusolvstatus);
-    cublasHandle_t cublasH; // cublas handle
+    // printf("CUSOLVE %d\n", cusolvstatus);
 
-    Matrix *a_dev;
-    double *a_arr;
-    int *a_dim_arr;
-    copyMatrixFromHostToDevice(a, &a_dev, &a_arr, &a_dim_arr);
-
-    int n = a->real_shape[0], m = a->real_shape[1];
+    int n = a->n(), m = a->m();
     int rank = min(n, m);
-    // Matrix U SIGMA V on host
-    Matrix *U = new Matrix(n, rank), *S = new Matrix(rank, rank), *VT = new Matrix(rank, m);
 
-    // Matrixes on device
-    Matrix *U_dev, *VT_dev;
+    double* a_arr;
+    CCE(cudaMalloc(&a_arr, sizeof(double) * n * m));
+    CCE(cudaMemcpy(a_arr, a->matrix, sizeof(double) * n * m, cudaMemcpyHostToDevice));
+
+    // Matrix U SIGMA V on host
     double *U_arr, *VT_arr;
-    int *U_dim_arr, *VT_dim_arr;
+    CCE(cudaMalloc(&U_arr, sizeof(double) * n * rank));
+    CCE(cudaMalloc(&VT_arr, sizeof(double) * rank * m));
 
     // array for singular values
     double* s_arr;
     CCE(cudaMalloc(&s_arr, sizeof(double) * rank));
+    CCE(cudaGetLastError());
 
-    copyMatrixFromHostToDevice(U, &U_dev, &U_arr, &U_dim_arr);
-    copyMatrixFromHostToDevice(VT, &VT_dev, &VT_arr, &VT_dim_arr);
-
-    int lda = m;
-    int ldu = m;
+    int lda = n;
+    int ldu = n;
     int ldvt = rank;
 
-    int info_gpu = 0;
-
     int lwork = 0;
-    cusolverDnDgesvd_bufferSize(cusolverH, m, n, &lwork);
+    cusolverDnDgesvd_bufferSize(cusolverH, n, rank, &lwork);
+    CCE(cudaGetLastError());
     double* work;
     CCE(cudaMalloc(&work, sizeof(double) * lwork));
 
     double* d_rwork;
     CCE(cudaMalloc(&d_rwork, sizeof(double) * (rank - 1)));
+    
     int* info;
+    CCE(cudaMalloc(&info, sizeof(int)));
 
     cusolverStatus_t cusolver_status = cusolverDnDgesvd(
         cusolverH,
-        'A', 'A',
+        'S', 'S',
         n, m,
         a_arr, lda,
         s_arr,
         U_arr, ldu,
-        VT_arr,  ldvt,
+        VT_arr, ldvt,
         work, lwork,
         d_rwork, info
     );
     CCE(cudaGetLastError());
-    printf("%d\n", cusolver_status == CUSOLVER_STATUS_INTERNAL_ERROR);
+    // printf("cuBLAS SVD result status: %d\n", cusolver_status == CUSOLVER_STATUS_SUCCESS);
 
-    // CCE(cudaMemcpy(&info_gpu, info , sizeof (int), cudaMemcpyDeviceToHost));
-    // printf("[STATUS] After cusolver svd: %d", info_gpu);
+    double* s_cpu = new double[rank];
+    CCE(cudaMemcpy(s_cpu, s_arr, sizeof(double) * rank, cudaMemcpyDeviceToHost));
 
-    delete U;
-    copyMatrixFromDeviceToHost(U_arr, &U, n, rank);
+    Matrix* U = new Matrix(n, rank);
+    CCE(cudaMemcpy(U->matrix, U_arr, sizeof(double) * n * rank, cudaMemcpyDeviceToHost));
 
-    return new Triple(U, NULL, NULL);
+    Matrix* S = new Matrix(rank, rank);
+    for (int i = 0; i < rank; i++) {
+        S->set(i, i, s_cpu[i]);
+    }
+
+    Matrix* VT = new Matrix(rank, m);
+    CCE(cudaMemcpy(VT->matrix, VT_arr, sizeof(double) * rank * m, cudaMemcpyDeviceToHost));
+
+    return new Triple(U, S, VT);
 }
 
 vector<Matrix*> tensorTrain(Matrix* t, double eps) {
