@@ -35,5 +35,9 @@ int main() {
 //    tt[0]->show();
     vector<int> indexes = { 1, 1, 1 };
     printf("%f", getValueFromTrain(tt, indexes));
+    for (int i = 0; i < 3; i++) {
+        delete tt[i];
+    }
+    delete m;
     return 0;
 }
