@@ -176,17 +176,16 @@ vector<Matrix *> TTDecomposition(Matrix *a, double eps) {
 
     // U S VT
     auto svd_m_full = SVDDecomposition(M);
-
-    delete svd_m_full->first;
-    delete svd_m_full->second;
-    delete svd_m_full->third;
-    delete svd_m_full;
-
     auto svd_m = trunkSVDResultsForTT(svd_m_full, eps);
     res.push_back(svd_m->first);
     int r = svd_m->second->real_shape[0];
     delete M;
     M = multiply(svd_m->second, svd_m->third);
+
+    delete svd_m_full->first;
+    delete svd_m_full->second;
+    delete svd_m_full->third;
+    delete svd_m_full;
     delete svd_m->second;
     delete svd_m->third;
     delete svd_m;
@@ -199,10 +198,6 @@ vector<Matrix *> TTDecomposition(Matrix *a, double eps) {
         M->reshape(next_shape);
 
         auto svd_m_next_full = SVDDecomposition(M);
-        delete svd_m_next_full->first;
-        delete svd_m_next_full->second;
-        delete svd_m_next_full->third;
-        delete svd_m_next_full;
         auto svd_m_next = trunkSVDResultsForTT(svd_m_next_full, eps);
         int r_cur = svd_m_next->second->real_shape[0];
 
@@ -216,6 +211,10 @@ vector<Matrix *> TTDecomposition(Matrix *a, double eps) {
         delete M;
         M = multiply(svd_m_next->second, svd_m_next->third);
 
+        delete svd_m_next_full->first;
+        delete svd_m_next_full->second;
+        delete svd_m_next_full->third;
+        delete svd_m_next_full;
         delete svd_m_next->second;
         delete svd_m_next->third;
         delete svd_m_next;
