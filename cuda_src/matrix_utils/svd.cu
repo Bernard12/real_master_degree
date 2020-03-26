@@ -209,38 +209,47 @@ Triple* SVDDecomposition(Matrix *a, int rank, double eps) {
 }
 
 // Only for rectangal matrix
-Triple* SVDDecompositionwCUB(Matrix *a) {
-    if (a->shape_length!= 2) {
+Triple* SVDDecompositionwCUB(Matrix *t) {
+    if (t->shape_length!= 2) {
         printf("Cannot perform SVD for non rectangular matrix!");
         exit(-1);
     }
     cusolverDnHandle_t cusolverH; // cusolver handle
     cusolverStatus_t cusolvstatus = cusolverDnCreate(&cusolverH);
-    // printf("CUSOLVE %d\n", cusolvstatus);
+    printf("CUSOLVE %d\n", cusolvstatus);
 
-    int n = a->n(), m = a->m();
-    int rank = min(n, m);
+    Matrix* a;
+
+    if (t->n() < t->m()) {
+        a = transpose(t);
+    } else {
+        a = t->copy();
+    }
+
+    int rows = a->n(), cols = a->m();
+    int rank = min(rows, cols);
 
     double* a_arr;
-    CCE(cudaMalloc(&a_arr, sizeof(double) * n * m));
-    CCE(cudaMemcpy(a_arr, a->matrix, sizeof(double) * n * m, cudaMemcpyHostToDevice));
+    CCE(cudaMalloc(&a_arr, sizeof(double) * rows * cols));
+    CCE(cudaMemcpy(a_arr, a->matrix, sizeof(double) * rows * cols, cudaMemcpyHostToDevice));
 
     // Matrix U SIGMA V on host
     double *U_arr, *VT_arr;
-    CCE(cudaMalloc(&U_arr, sizeof(double) * n * rank));
-    CCE(cudaMalloc(&VT_arr, sizeof(double) * rank * m));
+    CCE(cudaMalloc(&U_arr, sizeof(double) * rows * rank));
+    CCE(cudaMalloc(&VT_arr, sizeof(double) * rank * cols));
 
     // array for singular values
     double* s_arr;
     CCE(cudaMalloc(&s_arr, sizeof(double) * rank));
     CCE(cudaGetLastError());
 
-    int lda = n;
-    int ldu = n;
-    int ldvt = rank;
+    int lda = rows;
+    int ldu = rows;
+    int ldvt = cols;
 
     int lwork = 0;
-    cusolverDnDgesvd_bufferSize(cusolverH, n, rank, &lwork);
+    auto status = cusolverDnDgesvd_bufferSize(cusolverH, rows, cols, &lwork);
+    printf("Buff size status %d\n", status);
     CCE(cudaGetLastError());
     double* work;
     CCE(cudaMalloc(&work, sizeof(double) * lwork));
@@ -250,127 +259,167 @@ Triple* SVDDecompositionwCUB(Matrix *a) {
     
     int* info;
     CCE(cudaMalloc(&info, sizeof(int)));
-
-    cusolverStatus_t cusolver_status = cusolverDnDgesvd(
+    cusolverStatus_t cusolver_status;
+    cusolver_status = cusolverDnDgesvd(
         cusolverH,
         'S', 'S',
-        n, m,
+        rows, cols,
         a_arr, lda,
         s_arr,
         U_arr, ldu,
         VT_arr, ldvt,
         work, lwork,
-        d_rwork, info
+        NULL, info
     );
+
     CCE(cudaGetLastError());
-    // printf("cuBLAS SVD result status: %d\n", cusolver_status == CUSOLVER_STATUS_SUCCESS);
+    printf("Debug: rows=%d cols=%d, lda=%d ldu=%d ldvt=%d, lwork=%d, \n", rows, cols, lda, ldu, ldvt, lwork);
+    printf("Checks lda!<max(1,rows): %d\n", !(lda < max(1, rows)));
+    printf("Checks ldu!<max(1,rows): %d\n", !(ldu < max(1, rows)));
+    printf("Checks ldv!<max(1,cols): %d\n", !(ldvt < max(1, cols)));
+    printf("cuBLAS SVD result status: %d\n", cusolver_status);
+    // printf("%d %d %d %d\n", CUSOLVER_STATUS_SUCCESS, CUSOLVER_STATUS_NOT_INITIALIZED, CUSOLVER_STATUS_INVALID_VALUE, CUSOLVER_STATUS_ARCH_MISMATCH, CUSOLVER_STATUS_INTERNAL_ERROR);
 
     double* s_cpu = new double[rank];
     CCE(cudaMemcpy(s_cpu, s_arr, sizeof(double) * rank, cudaMemcpyDeviceToHost));
 
-    Matrix* U = new Matrix(n, rank);
-    CCE(cudaMemcpy(U->matrix, U_arr, sizeof(double) * n * rank, cudaMemcpyDeviceToHost));
 
     Matrix* S = new Matrix(rank, rank);
     for (int i = 0; i < rank; i++) {
         S->set(i, i, s_cpu[i]);
     }
+    delete[] s_cpu;
 
-    Matrix* VT = new Matrix(rank, m);
-    CCE(cudaMemcpy(VT->matrix, VT_arr, sizeof(double) * rank * m, cudaMemcpyDeviceToHost));
+    Matrix* U = new Matrix(rows, rank);
+    CCE(cudaMemcpy(U->matrix, U_arr, sizeof(double) * rows * rank, cudaMemcpyDeviceToHost));
 
+    Matrix* VT = new Matrix(rank, cols);
+    CCE(cudaMemcpy(VT->matrix, VT_arr, sizeof(double) * rank * cols, cudaMemcpyDeviceToHost));
+
+    if (t->n() < t->m()) {
+        auto real_U = transpose(VT);
+        auto real_VT = transpose(U);
+
+        return new Triple(real_U, S, real_VT);
+    } else {
+        return new Triple(U, S, VT);
+    }
+}
+
+vector<Matrix*> TTDecomposition(Matrix* a, double eps) {
+    vector<Matrix *> res;
+
+    double norm = frobeniousNorm(a);
+    double threshold = norm * eps / sqrt(a->shape_length - 1);
+
+    int n_left = a->real_shape[0];
+    int n_right = 1;
+    for (int i = 1; i < a->shape_length; i++) {
+        n_right *= a->real_shape[i];
+    }
+
+    int shape[] = { n_left, n_right };
+    Matrix *M = a->copy();
+    M->reshape(shape, 2);
+
+    // U S VT
+    auto svd_m_full = SVDDecompositionwCUB(M);
+    auto svd_m = trunkSVDResultsForTT(svd_m_full, eps);
+    res.push_back(svd_m->first);
+    int r = svd_m->second->real_shape[0];
+    delete M;
+    M = multiply(svd_m->second, svd_m->third);
+
+    delete svd_m_full->first;
+    delete svd_m_full->second;
+    delete svd_m_full->third;
+    delete svd_m_full;
+    delete svd_m->second;
+    delete svd_m->third;
+    delete svd_m;
+
+
+    for (int i = 1; i < a->shape_length - 1; i++) {
+        n_left = a->real_shape[i];
+        n_right = n_right / a->real_shape[i];
+
+        int next_shape[] = {r * n_left, n_right};
+        M->reshape(next_shape, 2);
+
+        auto svd_m_next_full = SVDDecompositionwCUB(M);
+        auto svd_m_next = trunkSVDResultsForTT(svd_m_next_full, eps);
+        int r_cur = svd_m_next->second->real_shape[0];
+
+        Matrix *GK = svd_m_next->first;
+        int gk_shape[] = {r, n_left, r_cur};
+        GK->reshape(gk_shape, 3);
+
+        res.push_back(GK);
+        r = r_cur;
+
+        delete M;
+        M = multiply(svd_m_next->second, svd_m_next->third);
+
+        delete svd_m_next_full->first;
+        delete svd_m_next_full->second;
+        delete svd_m_next_full->third;
+        delete svd_m_next_full;
+        delete svd_m_next->second;
+        delete svd_m_next->third;
+        delete svd_m_next;
+    }
+
+    res.push_back(M);
+    return res;
+}
+
+// U S VT
+Triple* trunkSVDResultsForTT(Triple* svd, double eps) {
+    int rank = svd->second->n();
+    double sum = 0;
+    for (int i = rank - 1; i >= 1; i--) {
+        double val = svd->second->get(i, i);
+        if (sum + val > eps) {
+            break;
+        }
+        sum += val;
+        rank--;
+    }
+    Matrix* U = subMatrix(svd->first, 0, svd->first->n(), 0, rank);
+    Matrix* S = subMatrix(svd->second, 0, rank, 0, rank);
+    Matrix* VT = subMatrix(svd->third, 0, rank, 0, svd->third->m());
     return new Triple(U, S, VT);
 }
 
-vector<Matrix*> tensorTrain(Matrix* t, double eps) {
-    // initialization 
-    vector<Matrix*> res;
-    
-    // step 1
-    STEP(1)
-    double nrm = frobeniousNorm(t);
-    // step 2
-    STEP(2)
-    int n_left = t->real_shape[0];
-    int n_right = 1;
-    for (int i = 1; i < t->shape_length; i++) {
-        n_right *= t->real_shape[i];
+double getValueFromTrain(vector<Matrix *> m, vector<int> indexes) {
+    Matrix *first = subMatrix(m[0], indexes[0], indexes[0] + 1, 0, m[0]->m());
+    for (int i = 1; i < m.size() - 1; i++) {
+        Matrix *cur = m[i]->get2DshapeFrom3d(indexes[i]);
+
+        auto temp_first = multiply(first, cur);
+        delete first;
+        exit(0);
+        first = temp_first;
+    exit(0);
+
+        delete cur;
+    exit(0);
     }
-    // step 3 
-    STEP(3)
-    Matrix* B = t->copy();
-    // step 4
-    STEP(4)
-    int shapes[2] = { n_left, n_right };
-    B->reshape(shapes, 2);
-    // show(B, n_left, n_right);
-    // delete[] shapes;
-    // step 5.1
-    STEP(5)
-    int rank = min(n_left, n_right);
-    // TODO: use cublas SVD
-    auto B_svd = SVDDecomposition(B, rank, 1e-6);
-    show(B_svd->first, n_left, rank);
-    CCE(cudaGetLastError())
-    // step 5.2
-    // TODO: need to find optimal way to approximate matrix rank!
-    // double threshold = eps * nrm / sqrt(t->dims_count - 1);
-    // double sigma_sum = 0;
-    // int r = rank;
-    // for (int i = rank - 1; i >= 0; i--) {
-    //     double sigma_i = B_svd->second->get(i, i);
-    //     double sigma_i_s = sigma_i * sigma_i;
-    //     if (sigma_sum + sigma_i_s > threshold) {
-    //         r = i + 1;
-    //         break;
-    //     } else {
-    //         sigma_sum += sigma_i_s;
-    //     }
-    // }
-    // step 6
-    STEP(6)
-    Matrix* G_1 = B_svd->first;
-    res.push_back(G_1);
-    delete B;
-    B = multiply(B_svd->second, transpose(B_svd->third));
-    // TODO: free B_svd memory
-    int r_cur = rank;
-    // Other G calc
-    // step 8
-    STEP(8)
-    for (int i = 1; i < t->shape_length - 1; i++) {
-        // step 9
-        STEP(9)
-        n_left = t->real_shape[i];
-        n_right /= t->real_shape[i];
+    Matrix *last = subMatrix(m[m.size() - 1], 0, m[m.size() - 1]->n(), indexes[indexes.size() - 1],
+                             indexes[indexes.size() - 1] + 1);
 
-        // step 10
-        STEP(10)
-        int shapes[] = { r_cur * n_left, n_right };
-        B->reshape(shapes, 2);
+    exit(0);
+    auto temp_first = multiply(first, last);
+    exit(0);
 
-        // step 11
-        STEP(11)
-        int b_rank = min(r_cur * n_left, n_right );
-        auto b_svd = SVDDecomposition(B, b_rank, 1e-6);
+    double res = temp_first->matrix[0];
+    exit(0);
 
-        // step 12
-        STEP(12)
-        int G_I_shapes[] = { r_cur, t->real_shape[i], b_rank };
-        b_svd->first->reshape(G_I_shapes, 3);
-        Matrix* G_I = b_svd->first;
-        res.push_back(G_I);
-
-        // step 13
-        STEP(13)
-        delete B;
-        B = multiply(b_svd->second, transpose(b_svd->third));
-
-        // Missing step 13.5
-        r_cur = b_rank;
-    }
-    STEP(14)
-    Matrix* G_D = B->copy();
-    res.push_back(G_D);
+    delete first;
+    exit(0);
+    delete last;
+    exit(0);
+    delete temp_first;
+    exit(0);
     return res;
 }
