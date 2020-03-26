@@ -398,28 +398,19 @@ double getValueFromTrain(vector<Matrix *> m, vector<int> indexes) {
 
         auto temp_first = multiply(first, cur);
         delete first;
-        exit(0);
         first = temp_first;
-    exit(0);
 
         delete cur;
-    exit(0);
     }
     Matrix *last = subMatrix(m[m.size() - 1], 0, m[m.size() - 1]->n(), indexes[indexes.size() - 1],
                              indexes[indexes.size() - 1] + 1);
 
-    exit(0);
     auto temp_first = multiply(first, last);
-    exit(0);
 
     double res = temp_first->matrix[0];
-    exit(0);
 
     delete first;
-    exit(0);
     delete last;
-    exit(0);
     delete temp_first;
-    exit(0);
     return res;
 }
