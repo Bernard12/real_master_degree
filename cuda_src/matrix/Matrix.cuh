@@ -47,6 +47,7 @@ public:
 
         delete[] real_shape;
 
+        shape_length = new_shape_size;
         real_shape = new int[new_shape_size];
         for (int i = 0; i < new_shape_size; i++) {
             real_shape[i] = new_shapes[i];
@@ -59,10 +60,13 @@ public:
         res->shape_length = shape_length;
         res->total_element_count = total_element_count;
 
+        delete[] res->matrix;
         res->matrix = new double[total_element_count];
         for (int i = 0; i < total_element_count; ++i) {
             res->matrix[i] = matrix[i];
         }
+
+        delete[] res->real_shape;
         res->real_shape = new int[shape_length];
         for (int j = 0; j < shape_length; ++j) {
             res->real_shape[j] = real_shape[j];
@@ -93,7 +97,7 @@ public:
         }
         Matrix *res = new Matrix(real_shape[0], real_shape[2]);
         for (int i = 0; i < real_shape[0]; i++) {
-            for (int j = 0; j < real_shape[1]; j++) {
+            for (int j = 0; j < real_shape[2]; j++) {
                 res->set(i, j, this->get(i, x, j));
             }
         }

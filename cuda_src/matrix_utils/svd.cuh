@@ -20,5 +20,7 @@ Triple* SVDDecompositionwCUB(Matrix *a);
 Triple* SVDDecompositionNaive(Matrix* a);
 
 void copyMatrixFromHostToDevice(Matrix* hostMatrix, Matrix** deviceMatrix, double** deviceMatrixArray, int** deviceDimsArray);
-vector<Matrix*> tensorTrain(Matrix* t, double eps);
+vector<Matrix*> TTDecomposition(Matrix* a, double eps);
+Triple* trunkSVDResultsForTT(Triple* svd, double eps);
+double getValueFromTrain(vector<Matrix*> m, vector<int> indexes);
 #endif //MASTER_D_SVD_H
