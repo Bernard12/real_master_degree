@@ -39,6 +39,9 @@ double vectorColLength(Matrix* a);
 __host__ __device__
 double matrixNorm(Matrix* a);
 
+__host__ __device__
+double frobeniousNorm(Matrix* a);
+
 __host__
 Matrix* randomMatrix(int n, int m);
 

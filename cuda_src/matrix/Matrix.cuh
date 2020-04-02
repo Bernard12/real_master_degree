@@ -15,119 +15,124 @@ class Matrix {
 public:
 
     __host__ __device__
-    Matrix(int n, int m) : n(n), m(m) {
-        dims = new int[2];
-        dims_count = n * m;
-        dims[0] = n;
-        dims[1] = m;
-        dims_count = 2;
-        matrix = new double[n * m];
-        for (int i = 0; i < n * m; i++) {
+    Matrix(int n, int m) {
+        total_element_count = n * m;
+        matrix = new double[total_element_count];
+        for (int i = 0; i < total_element_count; i++) {
             matrix[i] = 0;
         }
-    }
-
-    Matrix(int dims_count, int* dims_value): dims_count(dims_count) {
-        int total = 1;
-        dims = new int[dims_count];
-        for (int i = 0; i < dims_count; i++) {
-            total *= dims_value[i];
-            dims[i] = dims_value[i];
-        }
-        matrix = new double[total];
-        for (int i = 0; i < total; i++) {
-            matrix[i] = 0;
-        }
+        real_shape = new int[2];
+        real_shape[0] = n;
+        real_shape[1] = m;
+        shape_length = 2;
     }
 
     __host__ __device__
     ~Matrix() {
         delete[] matrix;
-        delete[] dims;
+        delete[] real_shape;
     }
 
+    void reshape(int* new_shapes, int new_shape_size) {
+        int new_total = 1;
+
+        for (int i = 0; i < new_shape_size; i++) {
+            new_total *= new_shapes[i];
+        }
+
+        if (new_total != total_element_count) {
+            printf("Cannot reshape, new_total before:%d, new_total after: %d\n", total_element_count, new_total);
+            exit(-1);
+        }
+
+        delete[] real_shape;
+
+        shape_length = new_shape_size;
+        real_shape = new int[new_shape_size];
+        for (int i = 0; i < new_shape_size; i++) {
+            real_shape[i] = new_shapes[i];
+        }
+    }
+
+    Matrix *copy() {
+        Matrix *res = new Matrix(0, 0);
+
+        res->shape_length = shape_length;
+        res->total_element_count = total_element_count;
+
+        delete[] res->matrix;
+        res->matrix = new double[total_element_count];
+        for (int i = 0; i < total_element_count; ++i) {
+            res->matrix[i] = matrix[i];
+        }
+
+        delete[] res->real_shape;
+        res->real_shape = new int[shape_length];
+        for (int j = 0; j < shape_length; ++j) {
+            res->real_shape[j] = real_shape[j];
+        }
+        return res;
+    }
 
     __host__ __device__
     double get(int i, int j) {
-        if (dims_count != 2) {
-            printf("Wrong sized, cur: %d, but required 2\n", dims_count);
-            return 0;
-        }
-        // i + n * j
-        int index = i + dims[0] * j;
+        int index = i + real_shape[0] * j;
         return matrix[index];
+    }
+
+    __host__ __device__
+    double get(int i, int j, int k) {
+        if (shape_length != 3) {
+            printf("Matrix is not 3d cannot get element");
+            exit(13);
+        }
+        int index = i + real_shape[0] * j + real_shape[0] * real_shape[1] * k;
+        return matrix[index];
+    }
+
+    Matrix *get2DshapeFrom3d(int x) {
+        if (shape_length != 3) {
+            printf("Cannot get shape from non 3d matrix");
+            exit(14);
+        }
+        Matrix *res = new Matrix(real_shape[0], real_shape[2]);
+        for (int i = 0; i < real_shape[0]; i++) {
+            for (int j = 0; j < real_shape[2]; j++) {
+                res->set(i, j, this->get(i, x, j));
+            }
+        }
+        return res;
     }
 
     __host__ __device__
     void set(int i, int j, double value) {
-        // i + n * j
-        if (dims_count != 2) {
-            printf("Wrong sized, cur: %d, but required 2\n", dims_count);
-            return;
-        }
-        int index = i + dims[0] * j;
+        int index = i + real_shape[0] * j;
         matrix[index] = value;
     }
 
-    __host__
-    double get(int* indexes, int index_count) {
-        if (index_count != dims_count) {
-            printf("Wrong sized (cur: %d, passed: %d)\n", dims_count, index_count);
-            return 0;
+    __host__ __device__
+    int n() {
+        if (shape_length != 2) {
+            printf("Current shape is not 2 (cur %d)\n", shape_length);
+            return -1;
         }
-        // for dim_count = 3
-        // index for i j k
-        // index = i + dims[0] * j + dims[0] * dims[1] * k;
-        // int index = i;
-        int index = 0;
-        int mlt = 1;
-        for (int i = 0; i < dims_count; i++) {
-            index += indexes[i] * mlt;
-            if (i != dims_count - 1) {
-                mlt *= dims[i];
-            }
-        }
-        return matrix[index];
+        return real_shape[0];
     }
 
-    __host__
-    void set(int* indexes, int index_count, double value) {
-        if (index_count != dims_count) {
-            printf("Wrong sized (cur: %d, passed: %d)\n", dims_count, index_count);
-            return;
+    __host__ __device__
+    int m() {
+        if (shape_length != 2) {
+            printf("Current shape is not 2 (cur %d)\n", shape_length);
+            return -1;
         }
-        // for dim_count = 3
-        // index for i j k
-        // index = i + dims[0] * j + dims[0] * dims[1] * k;
-        // int index = i;
-        int index = 0;
-        int mlt = 1;
-        for (int i = 0; i < dims_count; i++) {
-            index += indexes[i] * mlt;
-            if (i != dims_count - 1) {
-                mlt *= dims[i];
-            }
-        }
-        printf("index: %d\n", index);
-        matrix[index] = value;
+        return real_shape[1];
     }
 
-    __host__
-    void reshape(int* new_dims, int new_dims_count) {
-        delete[] dims;
-        
-        dims_count = new_dims_count;
-        dims = new int[dims_count];
-        for (int i = 0; i < new_dims_count; i++) {
-            dims[i] = new_dims[i];
-        }
-    };
+    double *matrix;
 
-    int n, m;
-    double* matrix;
-    int* dims;
-    int dims_count;
+    int shape_length;
+    int *real_shape;
+    int total_element_count;
 };
-
 
 #endif //MASTER_D_MATRIX_H

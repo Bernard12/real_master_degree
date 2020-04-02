@@ -7,8 +7,8 @@
 
 __host__ __device__
 Matrix* sum(Matrix *a, Matrix *b) {
-    const int n = a->n;
-    const int m = a->m;
+    const int n = a->n();
+    const int m = a->m();
     const int nm = n * m;
 
     // int startIdx = blockIdx.x * blockDim.x + threadIdx.x;
@@ -51,12 +51,7 @@ void show(Matrix* mtr, int n, int m, int k) {
     for (int i = 0; i < n; i++) {
         for (int j = 0; j < m; j++) {
             for (int q = 0; q < k; q++) {
-                int* m = new int[3];
-                m[0] = i;
-                m[1] = j;
-                m[2] = q;
-                printf("(%d, %d, %d): %f\n", i, j, q, mtr->get(m, 3));
-                delete[] m;
+                printf("(%d, %d, %d): %f\n", i, j, q, mtr->get(i, j, k));
             }
         }
     }
@@ -65,12 +60,12 @@ void show(Matrix* mtr, int n, int m, int k) {
 
 __host__ __device__
 Matrix* multiply(Matrix *a, Matrix *b) {
-    Matrix* res = new Matrix(a->n, b->m);
+    Matrix* res = new Matrix(a->n(), b->m());
     // TODO
     // Added better implementation
-    for (int i = 0; i < a->n; i++) {
-        for (int j = 0; j < b->m; j++) {
-            for (int k = 0; k < a->m; k++) {
+    for (int i = 0; i < a->n(); i++) {
+        for (int j = 0; j < b->m(); j++) {
+            for (int k = 0; k < a->m(); k++) {
                 double aik = a->get(i, k);
                 double bkj = b->get(k, j);
                 double prev_resij = res->get(i, j);
@@ -83,7 +78,7 @@ Matrix* multiply(Matrix *a, Matrix *b) {
 
 __host__ __device__
 Matrix* multiply(Matrix *a, double b) {
-    const int n = a->n, m = a->m;
+    const int n = a->n(), m = a->m();
     Matrix* res = new Matrix(n, m);
 
     for (int ij = 0; ij < n * m; ij++) {
@@ -101,9 +96,9 @@ void multiply(Matrix* a, Matrix* b, Matrix* c) {
     int startIdx = blockIdx.x * blockDim.x + threadIdx.x;
     int offset = gridDim.x * blockDim.x;
 
-    int n = a->n;
-    int m = a->m;
-    int k = b->m;
+    int n = a->n();
+    int m = a->m();
+    int k = b->m();
 
 
     for (int i = startIdx; i < n * k; i += offset) {
@@ -122,7 +117,7 @@ void multiply(Matrix* a, Matrix* b, Matrix* c) {
 __host__ __device__
 bool equals(Matrix *a, Matrix *b, double eps) {
     bool res = true;
-    const int n = a->n, m = a->m;
+    const int n = a->n(), m = a->m();
     for (int ij = 0; ij < n * m; ij++) {
         double aij = a->get(ij / m,ij % m);
         double bij = b->get(ij / m,ij % m);
@@ -136,7 +131,7 @@ double diff(Matrix *a, Matrix *b) {
     Matrix* tmp = multiply(b, -1);
     Matrix* res = sum(a, tmp);
     double diff = 0;
-    const int n = a->n, m = a->m;
+    const int n = a->n(), m = a->m();
     for (int ij = 0; ij < n * m; ij++) {
         double rij = res->get(ij / m, ij % m);
         diff = max(abs(diff), rij);
@@ -161,7 +156,7 @@ Matrix* randomMatrix(int n, int m) {
 __host__ __device__
 double vectorColLength(Matrix *a) {
     double sum = 0;
-    for (int i = 0; i < a->n; i++) {
+    for (int i = 0; i < a->n(); i++) {
         double ai0 = a->get(i, 0);
         sum += ai0 * ai0;
     }
@@ -170,11 +165,25 @@ double vectorColLength(Matrix *a) {
 
 __host__ __device__
 double matrixNorm(Matrix *a) {
-    const int n = a->n, m = a->m;
+    const int n = a->n(), m = a->m();
     double sum = 0;
     for (int ij = 0; ij < n * m; ij++) {
         double aij = a->get(ij / m, ij % m);
         sum += aij * aij;
+    }
+    return sqrt(sum);
+}
+
+__host__ __device__
+double frobeniousNorm(Matrix* a) {
+    int total = 1;
+    for (int i = 0; i < a->shape_length; i++) {
+        total *= a->real_shape[i];
+    }
+    double sum = 0;
+    for (int i = 0; i < total; i++) {
+        double value = a->matrix[i];
+        sum += value * value;
     }
     return sqrt(sum);
 }
@@ -187,7 +196,7 @@ Matrix* vectorColNormalize(Matrix *a) {
 
 __host__ __device__
 Matrix* transpose(Matrix *a) {
-    const int n = a->n, m = a->m;
+    const int n = a->n(), m = a->m();
     auto* res = new Matrix(m, n);
     for (int ij = 0; ij < n * m; ij++) {
         double aij = a->get(ij / m, ij % m);
@@ -221,7 +230,7 @@ Matrix* hilbert(int n, int m) {
     for (int ij = 0; ij < n * m; ij++) {
         i = ij / m;
         j = ij % m;
-        res->set(ij / m, ij % m, 1. / (i + j + 2));
+        res->set(ij / m, ij % m, 1. / (i + j + 1));
     }
     return res;
 }
@@ -232,21 +241,18 @@ Matrix* hilbert(int n, int m, int k) {
     shapes[0] = n;
     shapes[1] = m;
     shapes[2] = k;
-    auto* res = new Matrix(3, shapes);
+    auto* res = new Matrix(n * m, k);
+    res->reshape(shapes, 3);
     delete[] shapes;
     // TODO:
     // Add CUDA parallel option of loop
     for (int i = 0; i < n; i++) {
         for (int j = 0; j < m; j++) {
             for (int q = 0; q < k; q++) {
-                int* mm = new int[3];
-                mm[0] = i;
-                mm[1] = j;
-                mm[2] = q;
                 double val = 1./(i + j + q + 1);
-                printf("Set(%d, %d, %d) %f\n", i, j, q, val);
-                res->set(mm, 3, val);
-                delete[] mm;
+                // printf("Set(%d, %d, %d) %f\n", i, j, q, val);
+                int index = i + n * j + n * m * q;
+                res->matrix[index] = val;
             }
         }
     }
