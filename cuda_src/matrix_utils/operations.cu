@@ -318,3 +318,96 @@ Matrix* hilbert(int i1, int i2, int i3, int i4, int i5, int i6, int i7) {
 
     return res;
 }
+
+Matrix *sinCube(int r, double step) {
+    int d = 7;
+
+    vector<int> shape;
+    int total = 1;
+    for (int i = 0; i < d; i++) {
+        shape.push_back(r);
+        total *= r;
+    }
+    total /= r;
+
+
+    auto *res = new Matrix(r, total);
+
+    int* next_shape = new int[shape.size()];
+    for ( int i = 0; i < shape.size(); i++) {
+        next_shape[i] = shape[i];
+    }
+
+    res->reshape(next_shape, shape.size());
+
+    for (int i1 = 0; i1 < r; i1++) {
+        for (int i2 = 0; i2 < r; i2++) {
+            for (int i3 = 0; i3 < r; i3++) {
+                for (int i4 = 0; i4 < r; i4++) {
+                    for (int i5 = 0; i5 < r; i5++) {
+                        for (int i6 = 0; i6 < r; i6++) {
+                            for (int i7 = 0; i7 < r; i7++) {
+                                double sum =
+                                        i1 * step + i2 * step +
+                                        i3 * step + i4 * step +
+                                        i5 * step + i6 * step +
+                                        i7 * step ;
+                                double sn = sin(sum);
+                                int index =
+                                        i1 +
+                                        r * i2 +
+                                        r * r * i3 +
+                                        r * r * r * i4 +
+                                        r * r * r * r * i5 +
+                                        r * r * r * r * r * i6 +
+                                        r * r * r * r * r * r * i7;
+                                res->matrix[index] = sn;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    return res;
+}
+
+double convolution(vector<Matrix*> tt, vector<Matrix *> u) {
+    auto v1 = multiply(transpose(u[0]), tt[0]);
+    auto vn = multiply(tt.back(), u.back());
+
+    vector<Matrix*> gks;
+
+    for (int i = 1; i < tt.size() - 1; i++) {
+        int r1 = tt[i]->real_shape[0];
+        int nk = tt[i]->real_shape[1];
+        int r2 = tt[i]->real_shape[2];
+
+        auto* gk_cur = new Matrix(r1, r2);
+
+        for (int i1 = 0; i1 < r1; i1++) {
+            for (int i2 = 0; i2 < r2; i2++) {
+                for (int q = 0; q < nk; q++) {
+                    double val = gk_cur->get(i1, i2);
+
+                    double sum = tt[i]->matrix[i1 + r1 * q + r1 * nk * i2] * u[i]->get(q, 0);
+
+                    gk_cur->set(i1, i2, val + sum);
+                }
+            }
+        }
+
+        gks.push_back(gk_cur);
+    }
+
+    Matrix* v = v1;
+
+    for (int i = 0; i < gks.size(); i++) {
+        v = multiply(v, gks[i]);
+    }
+
+    v = multiply(v, vn);
+
+    return v->get(0, 0);
+}

@@ -39,4 +39,7 @@ Matrix* hilbert(int n, int m);
 Matrix* hilbert(int n, int m, int k);
 Matrix* hilbert(int i1, int i2, int i3, int i4, int i5);
 Matrix* hilbert(int i1, int i2, int i3, int i4, int i5, int i6, int i7);
+
+Matrix* sinCube(int r, double step);
+double convolution(vector<Matrix*> tt, vector<Matrix *> u);
 #endif //MASTER_D_OPERATIONS_H

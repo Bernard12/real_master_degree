@@ -249,7 +249,7 @@ Triple* SVDDecompositionwCUB(Matrix *t) {
 
     int lwork = 0;
     auto status = cusolverDnDgesvd_bufferSize(cusolverH, rows, cols, &lwork);
-    printf("Buff size status %d\n", status);
+    printf("Buff size status %d, lwork: %d\n", status, lwork);
     CCE(cudaGetLastError());
     double* work;
     CCE(cudaMalloc(&work, sizeof(double) * lwork));

@@ -61,6 +61,10 @@ __host__
 Matrix* hilbert(int n, int m, int k);
 __host__
 Matrix* hilbert(int i1, int i2, int i3, int i4, int i5);
-__host__
 Matrix* hilbert(int i1, int i2, int i3, int i4, int i5, int i6, int i7);
+
+__host__
+Matrix* sinCube(int r, double step);
+__host__
+double convolution(vector<Matrix*> tt, vector<Matrix *> u);
 #endif //MASTER_D_OPERATIONS_H
