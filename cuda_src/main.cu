@@ -1,13 +1,16 @@
 #include "matrix/Matrix.cuh"
 #include "matrix_utils/svd.cuh"
 #include <stdio.h>
+#include <chrono>
 
 // CATCH_CUDA_ERR(cudaMalloc(&dev_array, sizeof(int) * used_n));
 // CATCH_CUDA_ERR(cudaMemcpy(dev_array, array, sizeof(int) * used_n, cudaMemcpyHostToDevice));
 
 int main() {
-    int n = 4, m = 16, k = 4;
-    Matrix* mtr = hilbert(n,m,k);
+    int i1 = 10, i2 = 10, i3 = 10, i4 = 10, i5 = 10, i6 = 10, i7 = 10;
+//    Matrix* mtr = hilbert(i1, i2, i3, i4, i5, i6, i7);
+    Matrix* mtr = hilbert(1000, 1000, 100);
+
     // Matrix* mtr = hilbert(m,n);
     // Matrix* mtr = hilbert(n,m);
     // int * shapes = new int[3];
@@ -44,15 +47,21 @@ int main() {
     // mtr->reshape(newShapes, 2);
     // show(mtr, 8, 2);
     printf("start tt decomposition %d\n", mtr->shape_length);
-    auto tt = TTDecomposition(mtr, 1e-6);
+    auto start = chrono::high_resolution_clock::now();
+    auto tt    = TTDecomposition(mtr, 1e-3);
+    auto end   = chrono::high_resolution_clock::now();
+
+    auto diff = chrono::duration_cast<chrono::milliseconds>(end - start);
+    printf("Execution time %f\n", diff.count() / 1000.);
+
     // show(tt[2], 4, 4);
-    for(auto i : tt) {
-        printf("%d ", i->shape_length);
-    }
-    printf("\n");
-    vector<int> indexes = {0, 1, 0};
-    double val = getValueFromTrain(tt, indexes);
-    printf("Value: %f\n", val);
+//    for(auto i : tt) {
+//        printf("%d ", i->shape_length);
+//    }
+//    printf("\n");
+//    vector<int> indexes = {0, 1, 0};
+//    double val = getValueFromTrain(tt, indexes);
+//    printf("Value: %f\n", val);
 
     // show(res, n, m);
     // show(mtr, n, m, k);

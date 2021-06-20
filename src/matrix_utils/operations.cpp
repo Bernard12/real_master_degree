@@ -195,13 +195,71 @@ Matrix* hilbert(int n, int m, int k) {
     vector<int> bla = { n, m, k };
     res->reshape(bla);
     for (int i = 0; i < n; i++) {
-        for (int j = 0; j < n; j++) {
-            for (int q = 0; q < n; q++) {
+        for (int j = 0; j < m; j++) {
+            for (int q = 0; q < k; q++) {
                 int index = i + n * j + n * m * q;
                 double val = 1. / (i + j + q + 1);
                 res->matrix[index] = val;
             }
         }
     }
+    return res;
+}
+
+Matrix* hilbert(int i1, int i2, int i3, int i4, int i5) {
+    auto* res = new Matrix(i1, i2 * i3 * i4 * i5);
+    vector<int> bla = { i1, i2, i3, i4, i5 };
+    res->reshape(bla);
+    for (int i = 0; i < i1; i++) {
+        for (int j = 0; j < i2; j++) {
+            for (int k = 0; k < i3; k++) {
+                for (int l = 0; l < i4; l++) {
+                    for (int w = 0; w < i5; w++) {
+                        int index =
+                                i +
+                                i1 * j +
+                                i1 * i2 * k +
+                                i1 * i2 * i3 * l +
+                                i1 * i2 * i3 * i4 * w;
+                        double val = 1. / (i + j + k + l + w + 1);
+                        res->matrix[index] = val;
+                    }
+                }
+            }
+        }
+    }
+    return res;
+}
+
+Matrix* hilbert(int i1, int i2, int i3, int i4, int i5, int i6, int i7) {
+    auto* res = new Matrix(i1, i2 * i3 * i4 * i5 * i6 * i7);
+    vector<int> bla = { i1, i2, i3, i4, i5, i6, i7 };
+    res->reshape(bla);
+    for (int i = 0; i < i1; i++) {
+        for (int j = 0; j < i2; j++) {
+            for (int k = 0; k < i3; k++) {
+                for (int l = 0; l < i4; l++) {
+                    for (int w = 0; w < i5; w++) {
+                        for (int e = 0; e < i7; e++) {
+                            for (int r = 0; r < i7; r++) {
+                                int index =
+                                        i +
+                                        i1 * j +
+                                        i1 * i2 * k +
+                                        i1 * i2 * i3 * l +
+                                        i1 * i2 * i3 * i4 * w +
+                                        i1 * i2 * i3 * i4 * i5 * e +
+                                        i1 * i2 * i3 * i4 * i5 * i6 * r;
+
+                                double val = 1. / (i + j + k + l + w + e + r + 1);
+                                res->matrix[index] = val;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     return res;
 }

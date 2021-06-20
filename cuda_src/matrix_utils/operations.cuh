@@ -59,4 +59,8 @@ Matrix* hilbert(int n, int m);
 
 __host__
 Matrix* hilbert(int n, int m, int k);
+__host__
+Matrix* hilbert(int i1, int i2, int i3, int i4, int i5);
+__host__
+Matrix* hilbert(int i1, int i2, int i3, int i4, int i5, int i6, int i7);
 #endif //MASTER_D_OPERATIONS_H

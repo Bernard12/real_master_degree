@@ -1,12 +1,21 @@
 #include <iostream>
+#include <chrono>
 #include <lapacke.h>
 #include "matrix_utils/operations.h"
 #include "matrix_utils/svd.h"
 #include "matrix/Matrix.h"
 
 int main() {
-    Matrix *m = hilbert(3, 3, 3);
-    auto tt = TTDecomposition(m, 1e-7);
+
+    Matrix *m = hilbert(100, 100, 100, 10, 10);
+
+    auto start = chrono::high_resolution_clock::now();
+    auto tt = TTDecomposition(m, 1e-3);
+    auto end   = chrono::high_resolution_clock::now();
+
+    auto diff = chrono::duration_cast<chrono::milliseconds>(end - start);
+    printf("Execution time %f", diff.count() / 1000.);
+
 //    Matrix *m2 = m->copy();
 //    m->show();
 //    vector<int> bla = {2, 3};
@@ -33,11 +42,11 @@ int main() {
 //    tt[1]->get2DshapeFrom3d(2)->show();
 //    tt[2]->show();
 //    tt[0]->show();
-    vector<int> indexes = { 1, 1, 1 };
-    printf("%f", getValueFromTrain(tt, indexes));
-    for (int i = 0; i < 3; i++) {
-        delete tt[i];
-    }
-    delete m;
+//    vector<int> indexes = { 1, 1, 1 };
+//    printf("%f", getValueFromTrain(tt, indexes));
+//    for (int i = 0; i < 3; i++) {
+//        delete tt[i];
+//    }
+//    delete m;
     return 0;
 }
